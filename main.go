@@ -3,7 +3,7 @@ package main
 import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
-	"mqttWatcher/command"
+	"SockerMQTTWatcher/command"
 	"os"
 )
 

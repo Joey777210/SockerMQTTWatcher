@@ -1,7 +1,6 @@
 package mqttStruct
 
 import (
-	"Socker/container"
 	"crypto/tls"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
@@ -89,7 +88,7 @@ func OnConnectLost(client mqtt.Client, err error) {
 
 func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 	log.Infof("Received message on topic: %s \t Message: %s\n", message.Topic(), message.Payload())
-	dirURL := fmt.Sprintf(container.DefaultInfoLocation, CN)
+	dirURL := fmt.Sprintf("/root/mergeDir/%s", CN)
 
 	fileName := dirURL + "/mqttSub"
 	file, err := os.Create(fileName)

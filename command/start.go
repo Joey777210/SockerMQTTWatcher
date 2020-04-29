@@ -3,7 +3,7 @@ package command
 import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"mqttWatcher/mqttStruct"
+	"SockerMQTTWatcher/mqttStruct"
 	"os"
 	"strconv"
 )
