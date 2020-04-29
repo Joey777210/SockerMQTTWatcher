@@ -28,7 +28,7 @@ func MqttOffline(containerName string) {
 	fmt.Println(mqttStruct.MqttClient.Server)
 	opts := mqtt.NewClientOptions().AddBroker(mqttStruct.MqttClient.Server)
 	opts.SetCleanSession(true)
-	opts.SetClientID(mqttStruct.MqttClient.ClientID)
+	opts.SetClientID(containerName)
 
 	tlsConfig := &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
 	opts.SetTLSConfig(tlsConfig)

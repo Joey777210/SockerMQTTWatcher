@@ -24,22 +24,22 @@ type Imqtt interface {
 type MqttImpl struct {
 }
 
-var containerName string
+var CN string
 
 //mqtt connect
-func (m *MqttImpl) Connect(cn string) error {
-	containerName = cn
+func (m *MqttImpl) Connect(containerName string) error {
+	CN = containerName
 	SetMqttClient(&MqttClient)
 	fmt.Println(MqttClient.Server)
 	opts := mqtt.NewClientOptions().AddBroker(MqttClient.Server)
 	opts.SetCleanSession(true)
-	opts.SetClientID(MqttClient.ClientID)
+	opts.SetClientID(containerName)
 	opts.OnConnect = OnConnect
 	opts.OnConnectionLost = OnConnectLost
 	opts.SetWill(GetTopic(SysOnLinePub), OffLine, 1, true)
 
 	//replace {CN} with containerName
-	Replace(cn)
+	Replace(containerName)
 
 	tlsConfig := &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
 	opts.SetTLSConfig(tlsConfig)
@@ -89,7 +89,7 @@ func OnConnectLost(client mqtt.Client, err error) {
 
 func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 	log.Infof("Received message on topic: %s \t Message: %s\n", message.Topic(), message.Payload())
-	dirURL := fmt.Sprintf(container.DefaultInfoLocation, containerName)
+	dirURL := fmt.Sprintf(container.DefaultInfoLocation, CN)
 
 	fileName := dirURL + "/mqttSub"
 	file, err := os.Create(fileName)
@@ -98,12 +98,16 @@ func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 		fmt.Printf("Create file %s error %v \n", fileName, err)
 	}
 	jsonStr := string(message.Payload())
-	file.WriteString(jsonStr)
+	_, err = file.WriteString(jsonStr)
+	if err != nil {
+		log.Errorf("Write json str error %v", err)
+	}
 }
 
 func sendMessage(client mqtt.Client) {
-	dirURL := fmt.Sprintf("/root/mergeDir/%s", containerName)
+	dirURL := fmt.Sprintf("/root/mergeDir/%s", CN)
 	fileName := dirURL + "/mqttPub"
+	log.Info(fileName)
 	isExist, _ := PathExists(fileName)
 	if !isExist {
 		if _, err := os.Create(fileName); err != nil {

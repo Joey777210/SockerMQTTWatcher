@@ -20,6 +20,13 @@ func startMqttWatcher(containerName string) {
 func savePid(containerName string) {
 	//save pid and stop it by pid
 	dir := fmt.Sprintf(DefaultInfoLocation, containerName)
+	_, err := os.Stat(dir)
+	if os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0777)
+		if err != nil {
+			log.Errorf("Create dir %s error %v", dir, err)
+		}
+	}
 	filePath := dir + "/mqttPid"
 	file, err := os.Create(filePath)
 	defer file.Close()
