@@ -15,7 +15,6 @@ func main() {
 		&command.StopCommand,
 	}
 
-
 	//init logrus
 	app.Before = func(context *cli.Context) error {
 		//set log as JSON formatter

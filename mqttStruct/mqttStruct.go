@@ -69,12 +69,12 @@ func (m *MqttImpl) Connect(containerName string) error {
 }
 
 func OnConnect(client mqtt.Client) {
-	log.Infoln("onconnect  + " + GetTopic(SysDataSub))
+	log.Infoln("onconnect  + " + GetTopic(SysOrderSub))
 
 	if token := client.Publish(GetTopic(SysOnLinePub), 0, false, OnLine); token.Wait() && token.Error() != nil {
 		log.Errorf("client publish error %v\n", token.Error())
 	}
-	if token := client.Subscribe(GetTopic(SysDataSub), 0, onMessageReceived); token.Wait() && token.Error() != nil {
+	if token := client.Subscribe(GetTopic(SysOrderSub), 0, onMessageReceived); token.Wait() && token.Error() != nil {
 		log.Errorf("client subscribe message Error %v", token.Error())
 	}
 
@@ -88,19 +88,26 @@ func OnConnectLost(client mqtt.Client, err error) {
 
 func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 	log.Infof("Received message on topic: %s \t Message: %s\n", message.Topic(), message.Payload())
-	dirURL := fmt.Sprintf("/root/mergeDir/%s", CN)
 
-	fileName := dirURL + "/mqttSub"
-	file, err := os.Create(fileName)
-	defer file.Close()
-	if err != nil {
-		fmt.Printf("Create file %s error %v \n", fileName, err)
+	if string(message.Payload()) == "stop" {
+		stop(CN)
+	} else if string(message.Payload()) == "log" {
+		showLog(client, CN)
 	}
-	jsonStr := string(message.Payload())
-	_, err = file.WriteString(jsonStr)
-	if err != nil {
-		log.Errorf("Write json str error %v", err)
-	}
+
+	//dirURL := fmt.Sprintf("/root/mergeDir/%s", CN)
+	//
+	//fileName := dirURL + "/mqttSub"
+	//file, err := os.Create(fileName)
+	//defer file.Close()
+	//if err != nil {
+	//	fmt.Printf("Create file %s error %v \n", fileName, err)
+	//}
+	//jsonStr := string(message.Payload())
+	//_, err = file.WriteString(jsonStr)
+	//if err != nil {
+	//	log.Errorf("Write json str error %v", err)
+	//}
 }
 
 func sendMessage(client mqtt.Client) {

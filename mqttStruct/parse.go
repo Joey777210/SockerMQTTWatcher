@@ -6,7 +6,7 @@ import (
 	"os"
 )
 var (
-	mqttConfPath =  "./sk_mqtt.conf"
+	mqttConfPath =  "/var/run/socker/sk_mqtt.conf"
 )
 
 //parse mqttConfig and json unmarshal

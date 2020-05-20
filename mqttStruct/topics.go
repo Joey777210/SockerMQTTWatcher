@@ -12,13 +12,13 @@ type devTopic struct {
 const (
 	SysOnLinePub	= iota
 	SysDataPub
-	SysDataSub
+	SysOrderSub
 )
 
 var topics = []*devTopic{
 	{SysOnLinePub, "sys/{CN}/status/online"},
 	{SysDataPub, "sys/{CN}/msg/data"},
-	{SysDataSub, "sys/{CN}/msg/order"},
+	{SysOrderSub, "sys/{CN}/msg/order"},
 }
 
 func Replace(cn string) {
