@@ -5,7 +5,6 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/fsnotify/fsnotify"
 	"os"
 	"time"
 )
@@ -78,8 +77,9 @@ func OnConnect(client mqtt.Client) {
 		log.Errorf("client subscribe message Error %v", token.Error())
 	}
 
+	go Listen(":8888", client)
 	//watch file change and send message
-	sendMessage(client)
+	//sendMessage(client)
 }
 
 func OnConnectLost(client mqtt.Client, err error) {
@@ -111,51 +111,51 @@ func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 }
 
 func sendMessage(client mqtt.Client) {
-	dirURL := fmt.Sprintf("/root/mergeDir/%s", CN)
-	fileName := dirURL + "/mqttPub"
-	log.Info(fileName)
-	isExist, _ := PathExists(fileName)
-	if !isExist {
-		if _, err := os.Create(fileName); err != nil {
-			log.Errorf("Create file %s error %v", fileName, err)
-		}
-	}
-
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Errorf("New watcher error %v", err)
-	}
-	defer watcher.Close()
-
-	//done := make(chan bool)
-	go func() {
-		for {
-			select {
-			case event, ok := <-watcher.Events:
-				if !ok {
-					return
-				}
-				log.Infoln("event: ", event)
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					message := readFile(fileName)
-					msgPub(client, message)
-				}
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
-				log.Infof("Watch file error1 %v", err)
-			}
-		}
-	}()
-
-	err = watcher.Add(fileName)
-	if err != nil {
-		log.Errorf("Watch file error2 %v", err)
-	}
-	//<-done
-	//循环
-	select {}
+	//dirURL := fmt.Sprintf("/root/mergeDir/%s", CN)
+	//fileName := dirURL + "/mqttPub"
+	//log.Info(fileName)
+	//isExist, _ := PathExists(fileName)
+	//if !isExist {
+	//	if _, err := os.Create(fileName); err != nil {
+	//		log.Errorf("Create file %s error %v", fileName, err)
+	//	}
+	//}
+	//
+	//watcher, err := fsnotify.NewWatcher()
+	//if err != nil {
+	//	log.Errorf("New watcher error %v", err)
+	//}
+	//defer watcher.Close()
+	//
+	////done := make(chan bool)
+	//go func() {
+	//	for {
+	//		select {
+	//		case event, ok := <-watcher.Events:
+	//			if !ok {
+	//				return
+	//			}
+	//			log.Infoln("event: ", event)
+	//			if event.Op&fsnotify.Write == fsnotify.Write {
+	//				message := readFile(fileName)
+	//				msgPub(client, message)
+	//			}
+	//		case err, ok := <-watcher.Errors:
+	//			if !ok {
+	//				return
+	//			}
+	//			log.Infof("Watch file error1 %v", err)
+	//		}
+	//	}
+	//}()
+	//
+	//err = watcher.Add(fileName)
+	//if err != nil {
+	//	log.Errorf("Watch file error2 %v", err)
+	//}
+	////<-done
+	////循环
+	//select {}
 }
 
 func readFile(fileName string) string {
