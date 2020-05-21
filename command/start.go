@@ -12,6 +12,7 @@ const (
 	DefaultInfoLocation = "/var/run/socker/%s"
 )
 
+
 func startMqttWatcher(containerName string) {
 	//mqttStruct.Listen(":8888", msg)
 	savePid(containerName)

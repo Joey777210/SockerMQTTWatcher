@@ -8,7 +8,7 @@ import (
 
 var StartCommand = cli.Command{
 	Name:                   "start",
-	Usage:                  "start mqtt watche",
+	Usage:                  "start mqtt watcher",
 	Action: func(context *cli.Context) error {
 		if context.Args().Len() < 1 {
 			return fmt.Errorf("Missing mqtt command")
@@ -18,8 +18,8 @@ var StartCommand = cli.Command{
 			arg := context.Args().Get(i)
 			cmdArray = append(cmdArray, arg)
 		}
-		containerName := cmdArray[0]
-		startMqttWatcher(containerName)
+		gatewayName := cmdArray[0]
+		start(gatewayName)
 		return nil
 	},
 }

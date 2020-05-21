@@ -186,6 +186,7 @@ func msgPub(client mqtt.Client, message string) {
 		log.Errorf("client publish error %v\n", token.Error())
 	}
 }
+
 func PathExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
