@@ -8,12 +8,9 @@ import (
 	"time"
 )
 
-var (
-	Server	= "tcp://121.40.101.210:1883"
-)
-
 var client mqtt.Client
 
+//Only for gateway topic.    Container topic is in another connection
 func Connect(gatewayName string) {
 	opts := mqtt.NewClientOptions().AddBroker(Server)
 	opts.SetCleanSession(true)
@@ -69,10 +66,23 @@ func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 		socker := sockerImp{}
 		socker.RunNewContainer(order)
 	} else if order.Order == "containerls" {
-
+		socker := sockerImp{}
+		socker.ContainerLs(client)
 	} else if order.Order == "imagels" {
-
+		socker := sockerImp{}
+		socker.ImageLs(client)
 	} else if order.Order == "delete" {
-
+		//Delete this gateway from web
+		//Do nothing
+		socker := sockerImp{}
+		socker.Delete()
 	}
+}
+
+func MessagePublic(client mqtt.Client, topic string, message string) error {
+	if token := client.Publish(topic, 0, false, message); token.Wait() && token.Error() != nil {
+		log.Errorf("Client publish on Topic %s error %v\n", topic, token.Error())
+		return token.Error()
+	}
+	return nil
 }

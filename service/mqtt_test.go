@@ -22,3 +22,36 @@ func TestSockerImp_RunNewContainer(t *testing.T) {
 func TestMarshal1(t *testing.T) {
 	fmt.Print(Marshal1())
 }
+
+func TestFillContainerInfo(t *testing.T) {
+	var arr = []string{"8080:80", "498"}
+	container := ContainerImp{
+		Name:        "bird",
+		Command:     "top -b",
+		Image:       "ubuntu",
+		Memory:      "512",
+		CpuSet:      "1",
+		CpuShare:    "512",
+		PortMapping: arr,
+	}
+	FillContainerInfo(&container)
+}
+
+func TestSockerImp_ConatainerLs(t *testing.T) {
+	s := sockerImp{}
+	order := Order{
+		Order:   "run",
+		Content: Marshal1(),
+	}
+	//order := Order{
+	//	Order:   "run",
+	//	Content: Marshal1(),
+	//}
+	s.RunNewContainer(order)
+	s.ContainerLs(client)
+}
+
+func TestSockerImp_ImageLs(t *testing.T) {
+	s := sockerImp{}
+	s.ImageLs(client)
+}

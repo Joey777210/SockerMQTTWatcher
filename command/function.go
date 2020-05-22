@@ -9,6 +9,7 @@ import (
 func start(gatewayName string) {
 	InitSubnet()
 	service.Connect(gatewayName)
+	//service.Containers = make(map[string]service.ContainerImp)
 }
 
 func InitSubnet() {

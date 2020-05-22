@@ -4,18 +4,31 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"io/ioutil"
+	"os"
 	"os/exec"
+	"strconv"
+	"strings"
+)
+
+var (
+	DefaultInfoPath = "/var/run/socker/%s"
+	DefaultRootPath = "/root"
 )
 
 type socker interface {
-	Run(order Order) error
-	containerls() error
+	RunNewContainer(order Order) error
+	ContainerLs(client mqtt.Client)
+	ImageLs(client mqtt.Client)
+	Delete()
 }
 
 type sockerImp struct {
 
 }
 
+//
 func (s *sockerImp) RunNewContainer(order Order) {
 	content := order.Content
 	container := ContainerImp{}
@@ -23,7 +36,13 @@ func (s *sockerImp) RunNewContainer(order Order) {
 	if err != nil {
 		log.Errorf("Json Unmarshal run order error %v", err)
 	}
-	fmt.Print(container.Memory, container.Name)
+
+	_, ok := Containers[container.Name]
+	if ok {
+		ErrorPublic(err)
+		return
+	}
+
 	base := "sudo socker run -d -mqtt %s -net testbridge -p %s --name %s %s %s"
 	resource := ""
 	if container.Memory != ""{
@@ -35,14 +54,86 @@ func (s *sockerImp) RunNewContainer(order Order) {
 	if container.CpuShare != ""{
 		resource += " -cpushare " + container.CpuShare
 	}
-	runCmd := fmt.Sprintf(base, resource, container.PortMapping, container.Name, container.Image, container.Command)
-	//TODO
-	//fillContainerInfo(container)
-	fmt.Print(runCmd)
+	runCmd := fmt.Sprintf(base, resource, container.PortMapping[0], container.Name, container.Image, container.Command)
+
 	cmd := exec.Command("/bin/sh", "-c", runCmd)
-	err = cmd.Start()
+	err = cmd.Run()
+
+	FillContainerInfo(&container)
 	if err != nil {
 		log.Errorf("Start command %s error %v", runCmd, err)
 	}
+	Containers[container.Name] = container
+
+	//TODO
+	//Listen on contianer Topic
+	//ThreadPool
 }
 
+func (s *sockerImp) ContainerLs(client mqtt.Client) {
+
+	bytes, err := json.Marshal(Containers)
+	if err != nil {
+		log.Errorf("json marshal error %v", err)
+	}
+	message := string(bytes)
+	err = MessagePublic(client, GetTopic(SysCtnlsPub), message)
+	if err != nil {
+		ErrorPublic(err)
+	}
+}
+
+func (s *sockerImp) ImageLs(client mqtt.Client) {
+	err := findImages()
+	if err != nil {
+		log.Errorf("Find images error %v", err)
+		ErrorPublic(err)
+	}
+
+	bytes, err := json.Marshal(Images)
+	if err != nil {
+		log.Errorf("Json marshal images error %v", err)
+		ErrorPublic(err)
+	}
+	message := string(bytes)
+	err = MessagePublic(client, GetTopic(SysImglsPub), message)
+	if err != nil {
+		log.Errorf("Message Public image ls error %v", err)
+		ErrorPublic(err)
+	}
+}
+
+func findImages() error {
+	files, err := ioutil.ReadDir(DefaultRootPath)
+	if err != nil {
+		log.Errorf("Open dir %s error %v", DefaultRootPath, err)
+		ErrorPublic(err)
+		return err
+	}
+	//get all image
+	for _, f := range files {
+		strs := strings.Split(f.Name(), ".")
+		if len(strs) == 2 && strs[1] == "tar"{
+			image := getImage(f)
+			Images[image.Name] = image
+		}
+	}
+	return nil
+}
+
+func getImage(f os.FileInfo) image {
+	var image image
+	name := strings.Split(f.Name(), ".")
+	modTime := f.ModTime().String()
+	times := strings.Split(modTime, " ")
+	hms := strings.Split(times[1], ".")
+
+	image.Name = name[0]
+	image.ModTime = times[0] + " " + hms[0]
+	image.Size = strconv.Itoa(int(f.Size()/1024/1024)) + "MB"
+	return image
+}
+
+func (s *sockerImp)Delete() {
+	//Do nothing
+}

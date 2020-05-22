@@ -6,11 +6,19 @@ import (
 )
 
 var (
+	Server	= "tcp://121.40.101.210:1883"
+)
+
+var (
 	SysDataPub		= "sysDataPub"
 	SysOrderSub		= "sysOrderSub"
 	SysStatusPub	= "sysStatusPub"
 	SysLogPub		= "sysLogPub"
 	SysGWSub		= "sysGWSub"
+	SysCtnlsPub		= "sysCtnlsPub"
+	SysImglsPub		= "sysImglsPub"
+	SysGWErrPub		= "sysGWErrPub"
+	//SysCNErrPub		= "sysCNErrPub"
 )
 
 var topics = map[string]string {
@@ -19,6 +27,10 @@ var topics = map[string]string {
 	"sysStatusPub"	: "sys/{GW}/{CN}/online",		//online
 	"sysLogPub"		: "sys/{GW}/{CN}/log",			//log up
 	"sysGWSub"		: "sys/{GW}/order",				//gateway order
+	"sysCtnlsPub"	: "sys/{GW}/Ctnls",				//pub container ls
+	"sysImglsPub"	: "sys/{GW}/Imgls",				//pub container ls
+	"sysGWErrPub"	: "sys/{GW}/err",				//gateway err
+	//"sysCNErrPub"	: "sys/{GW}/{CN}/err",			//container err
 }
 
 type Order struct {
