@@ -49,8 +49,8 @@ func Connect(gatewayName string) {
 }
 
 func OnConnect(client mqtt.Client) {
-	if token := client.Subscribe(GetTopic(SysGWSub), 0, onMessageReceived); token.Wait() && token.Error() != nil {
-		log.Errorf("mqtt client subscribe topic %s Error %v", GetTopic(SysGWSub), token.Error())
+	if token := client.Subscribe(GetTopic(SysOrderSub), 0, onMessageReceived); token.Wait() && token.Error() != nil {
+		log.Errorf("mqtt client subscribe topic %s Error %v", GetTopic(SysOrderSub), token.Error())
 	}
 }
 
@@ -61,21 +61,40 @@ func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 	if err != nil {
 		log.Errorf("Unmarshal order error %v", err)
 	}
-	//add container
-	if order.Order == "run" {
-		socker := sockerImp{}
-		socker.RunNewContainer(order)
-	} else if order.Order == "containerls" {
-		socker := sockerImp{}
-		socker.ContainerLs(client)
-	} else if order.Order == "imagels" {
-		socker := sockerImp{}
-		socker.ImageLs(client)
-	} else if order.Order == "delete" {
-		//Delete this gateway from web
-		//Do nothing
-		socker := sockerImp{}
-		socker.Delete()
+
+	socker := sockerImp{}
+	switch order.Target {
+	case "container":
+		switch order.Order {
+		case "run":
+			//TODO
+			//listen new container and send data
+			//return new container info
+			socker.RunNewContainer(order)
+		case "stop":
+			socker.ContainerStop(order)
+		case "commit":
+		case "remove":
+		case "ls":
+			socker.ContainerLs(client)
+		case "log":
+		default:
+			//TODO
+			//error public
+		}
+	case "image":
+		switch order.Order {
+		case "ls":
+			socker.ImageLs(client)
+		case "remove":
+			socker.ImageRm(order)
+		}
+	case "socker":
+		switch order.Order {
+		case "newNetwork":
+		case "delete":
+			socker.Delete()
+		}
 	}
 }
 

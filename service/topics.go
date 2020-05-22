@@ -10,11 +10,10 @@ var (
 )
 
 var (
-	SysDataPub		= "sysDataPub"
 	SysOrderSub		= "sysOrderSub"
 	SysStatusPub	= "sysStatusPub"
 	SysLogPub		= "sysLogPub"
-	SysGWSub		= "sysGWSub"
+	SysDataPub		= "sysDataPub"
 	SysCtnlsPub		= "sysCtnlsPub"
 	SysImglsPub		= "sysImglsPub"
 	SysGWErrPub		= "sysGWErrPub"
@@ -22,11 +21,10 @@ var (
 )
 
 var topics = map[string]string {
+	"sysOrderSub"	: "sys/{GW}/order",				//order
 	"sysDataPub"	: "sys/{GW}/{CN}/msg",			//data up
-	"sysOrderSub"	: "sys/{GW}/{CN}/order",		//order
 	"sysStatusPub"	: "sys/{GW}/{CN}/online",		//online
 	"sysLogPub"		: "sys/{GW}/{CN}/log",			//log up
-	"sysGWSub"		: "sys/{GW}/order",				//gateway order
 	"sysCtnlsPub"	: "sys/{GW}/Ctnls",				//pub container ls
 	"sysImglsPub"	: "sys/{GW}/Imgls",				//pub container ls
 	"sysGWErrPub"	: "sys/{GW}/err",				//gateway err
@@ -34,8 +32,9 @@ var topics = map[string]string {
 }
 
 type Order struct {
-	Order   string		`json:"order"`
-	Content string		`json:"content"`
+	Target	string		`json:"target"`	//container/image/network
+	Order   string		`json:"order"`	//run/stop/ls...
+	Content string		`json:"content"`	//memory....
 }
 
 func GetTopic(key string) string {

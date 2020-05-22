@@ -137,3 +137,39 @@ func getImage(f os.FileInfo) image {
 func (s *sockerImp)Delete() {
 	//Do nothing
 }
+
+func (s *sockerImp)ImageRm(order Order) {
+	content := order.Content
+	image := image{}
+	err := json.Unmarshal([]byte(content), &image)
+	if err != nil {
+		log.Errorf("Json unmarshal error %v", err)
+		ErrorPublic(err)
+	}
+
+	imageName := image.Name + ".tar"
+	imagePath := DefaultRootPath + "/" +imageName
+	err = os.Remove(imagePath)
+	if err != nil {
+		log.Errorf("Remove Image %s error %v", imagePath, err)
+		ErrorPublic(err)
+	}
+}
+
+func (s *sockerImp)ContainerStop(order Order) {
+	content := order.Content
+	container := ContainerImp{}
+	err := json.Unmarshal([]byte(content), &container)
+	if err != nil {
+		log.Errorf("Json unmarshal error %v", err)
+		ErrorPublic(err)
+	}
+	cmd := exec.Command("/bin/sh", "-c", "sudo socker stop > /var/run/socker/sockerlog", container.Name)
+	err = cmd.Run()
+	if err != nil {
+		log.Errorf("Exec command %s error %v", cmd.String(), err)
+		ErrorPublic(err)
+	}
+
+
+}
