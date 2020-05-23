@@ -1,17 +1,18 @@
 package command
 
 import (
-	"SockerMQTTWatcher/log"
+
 	"SockerMQTTWatcher/service"
 	"errors"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/exec"
 	"time"
 )
 
 func start(gatewayName string) {
-	log.SetMylog()
+	//log.SetMylog()
 	InitSubnet()
 	service.Connect(gatewayName)
 	go service.LogAutoPub()
@@ -29,7 +30,7 @@ func InitSubnet() {
 	cmd := exec.Command("/bin/sh", "-c", createCmd)
 	err := cmd.Start()
 	if err != nil {
-		log.Mylog.Errorf("Start command %s error %v", createCmd, err)
+		log.Errorf("Start command %s error %v", createCmd, err)
 	}
 }
 

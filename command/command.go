@@ -1,6 +1,7 @@
 package command
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -15,6 +16,7 @@ var StartCommand = cli.Command{
 	},
 	Action: func(context *cli.Context) error {
 		gatewayName := context.String("name")
+		log.Infof(gatewayName)
 		start(gatewayName)
 		return nil
 	},

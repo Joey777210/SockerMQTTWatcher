@@ -1,8 +1,8 @@
 package service
 
 import (
-	"SockerMQTTWatcher/log"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"time"
 )
@@ -10,7 +10,7 @@ import (
 func ErrorPublic(err error) {
 	errSave(err)
 	if token := Client.Publish(GetTopic(SysGWErrPub), 0, false, err.Error()); token.Wait() && token.Error() != nil {
-		log.Mylog.Errorf("Client publish on Topic %s error %v\n", GetTopic(SysGWErrPub), token.Error())
+		log.Errorf("Client publish on Topic %s error %v\n", GetTopic(SysGWErrPub), token.Error())
 		errSave(token.Error())
 	}
 }
@@ -18,7 +18,7 @@ func ErrorPublic(err error) {
 func ErrorMsgPublic(message string) {
 	errMsgSave(message)
 	if token := Client.Publish(GetTopic(SysGWErrPub), 0, false, message); token.Wait() && token.Error() != nil {
-		log.Mylog.Errorf("Client publish on Topic %s error %v\n", GetTopic(SysGWErrPub), token.Error())
+		log.Errorf("Client publish on Topic %s error %v\n", GetTopic(SysGWErrPub), token.Error())
 		errSave(token.Error())
 	}
 }
@@ -35,7 +35,7 @@ func errSave(error error) {
 	errMsg := fmt.Sprintf("%s Error: %v", time.Now().String(), error)
 	_, err = file.WriteString(errMsg)
 	if err != nil {
-		log.Mylog.Errorf("Write err to file error %v", err)
+		log.Errorf("Write err to file error %v", err)
 	}
 }
 
@@ -52,6 +52,6 @@ func errMsgSave(message string) {
 	errMsg := fmt.Sprintf("%s Error: %s", time.Now().String(), message)
 	_, err = file.WriteString(errMsg)
 	if err != nil {
-		log.Mylog.Errorf("Write err to file error %v", err)
+		log.Errorf("Write err to file error %v", err)
 	}
 }

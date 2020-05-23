@@ -1,10 +1,11 @@
 package service
 
 import (
-	"SockerMQTTWatcher/log"
+
 	"encoding/json"
 	"errors"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/fsnotify/fsnotify"
 	"io/ioutil"
@@ -35,7 +36,7 @@ func (s *sockerImp) RunNewContainer(order Order) {
 	container := ContainerImp{}
 	err := container.Run(order)
 	if err != nil {
-		log.Mylog.Errorf("Run new container %s error %v", order.Name, err)
+		log.Errorf("Run new container %s error %v", order.Name, err)
 		err := errors.New(fmt.Sprintf("Run new container %s error %v", order.Name, err))
 		ErrorPublic(err)
 		err = ackPublic(Client, AckMsgFormat("container", order.Name, "run", 0))
@@ -57,7 +58,7 @@ func (s *sockerImp) ContainerLs(client mqtt.Client) {
 
 	bytes, err := json.Marshal(Containers)
 	if err != nil {
-		log.Mylog.Errorf("json marshal error %v", err)
+		log.Errorf("json marshal error %v", err)
 	}
 	message := string(bytes)
 	err = MessagePublic(client, GetTopic(SysCtnlsPub), message)
@@ -81,7 +82,7 @@ func (s *sockerImp) ContainerLs(client mqtt.Client) {
 func (s *sockerImp) ImageLs(client mqtt.Client) {
 	err := findImages()
 	if err != nil {
-		log.Mylog.Errorf("Find images error %v", err)
+		log.Errorf("Find images error %v", err)
 		err := errors.New(fmt.Sprintf("Find images error %v", err))
 		ErrorPublic(err)
 		err = ackPublic(client, AckMsgFormat("image", "", "ls", 0))
@@ -93,7 +94,7 @@ func (s *sockerImp) ImageLs(client mqtt.Client) {
 
 	bytes, err := json.Marshal(Images)
 	if err != nil {
-		log.Mylog.Errorf("Json marshal images error %v", err)
+		log.Errorf("Json marshal images error %v", err)
 		err := errors.New(fmt.Sprintf("Json marshal images error %v", err))
 		ErrorPublic(err)
 		err = ackPublic(client, AckMsgFormat("image", "", "ls", 0))
@@ -105,7 +106,7 @@ func (s *sockerImp) ImageLs(client mqtt.Client) {
 	message := string(bytes)
 	err = MessagePublic(client, GetTopic(SysImglsPub), message)
 	if err != nil {
-		log.Mylog.Errorf("Message Public image ls error %v", err)
+		log.Errorf("Message Public image ls error %v", err)
 		err := errors.New(fmt.Sprintf("Image ls error %v", err))
 		ErrorPublic(err)
 		err = ackPublic(client, AckMsgFormat("image", "", "ls", 0))
@@ -125,7 +126,7 @@ func (s *sockerImp) ImageLs(client mqtt.Client) {
 func findImages() error {
 	files, err := ioutil.ReadDir(DefaultRootPath)
 	if err != nil {
-		log.Mylog.Errorf("Open dir %s error %v", DefaultRootPath, err)
+		log.Errorf("Open dir %s error %v", DefaultRootPath, err)
 		ErrorPublic(err)
 		return err
 	}
@@ -161,7 +162,7 @@ func (s *sockerImp)ImageRm(order Order) {
 	image := image{}
 	err := image.Remove(order.Name)
 	if err != nil {
-		log.Mylog.Errorf("Remove image %s error %v", order.Name, err)
+		log.Errorf("Remove image %s error %v", order.Name, err)
 		err := errors.New(fmt.Sprintf("Remove image %s error %v", order.Name, err))
 		ErrorPublic(err)
 		err = ackPublic(Client, AckMsgFormat("image", order.Name, "remove", 0))
@@ -182,7 +183,7 @@ func (s *sockerImp)ContainerStop(order Order) {
 	container := ContainerImp{}
 	err := container.Stop(order.Name)
 	if err != nil {
-		log.Mylog.Errorf("Stop container %s error %v", order.Name, err)
+		log.Errorf("Stop container %s error %v", order.Name, err)
 		err := errors.New(fmt.Sprintf("Stop container %s error %v", order.Name, err))
 		ErrorPublic(err)
 		err = ackPublic(Client, AckMsgFormat("container", order.Name, "stop", 0))
@@ -205,14 +206,14 @@ func LogAutoPub() {
 	isExist, _ := PathExists(DefaultLogPath)
 	if !isExist {
 		if _, err := os.Create(DefaultLogPath); err != nil {
-			log.Mylog.Errorf("Create file %s error %v", DefaultLogPath, err)
+			log.Errorf("Create file %s error %v", DefaultLogPath, err)
 			ErrorMsgPublic(fmt.Sprintf("Create file %s error %v", DefaultLogPath, err))
 		}
 	}
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Mylog.Errorf("New watcher error %v", err)
+		log.Errorf("New watcher error %v", err)
 	}
 	defer watcher.Close()
 
@@ -224,13 +225,13 @@ func LogAutoPub() {
 				if !ok {
 					return
 				}
-				log.Mylog.Infoln("event: ", event)
+				log.Infoln("event: ", event)
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					message, err := readFile(DefaultLogPath)
 					fmt.Println(message)
 					err = MessagePublic(Client, GetTopic(SysGWLogPub), message)
 					if err != nil {
-						log.Mylog.Errorf("Send message error %v", err)
+						log.Errorf("Send message error %v", err)
 						ErrorPublic(err)
 					}
 				}
@@ -238,14 +239,14 @@ func LogAutoPub() {
 				if !ok {
 					return
 				}
-				log.Mylog.Infof("Watch file error1 %v", err)
+				log.Infof("Watch file error1 %v", err)
 			}
 		}
 	}()
 
 	err = watcher.Add(DefaultLogPath)
 	if err != nil {
-		log.Mylog.Errorf("Watch file error2 %v", err)
+		log.Errorf("Watch file error2 %v", err)
 	}
 	//<-done
 	//循环
@@ -268,7 +269,7 @@ func readFile(fileName string) (string, error) {
 	var message []byte
 	file, err := os.Open(fileName)
 	if err != nil {
-		log.Mylog.Errorf("Open file %s error %v \n", fileName, err)
+		log.Errorf("Open file %s error %v \n", fileName, err)
 		ErrorPublic(err)
 		return "", err
 	}
@@ -296,7 +297,7 @@ func (s *sockerImp) ContainerCommit(order Order) {
 	container := ContainerImp{}
 	err := container.Commit(order.Name)
 	if err != nil {
-		log.Mylog.Errorf("Commit container %s error %v", order.Name, err)
+		log.Errorf("Commit container %s error %v", order.Name, err)
 		err := errors.New(fmt.Sprintf("Commit container %s error %v", order.Name, err))
 		ErrorPublic(err)
 		err = ackPublic(Client, AckMsgFormat("container", order.Name, "commit", 0))
@@ -317,7 +318,7 @@ func (s *sockerImp) ContainerRemove(order Order) {
 	container := ContainerImp{}
 	err := container.Remove(order.Name)
 	if err != nil {
-		log.Mylog.Errorf("Remove container %s error %v", order.Name, err)
+		log.Errorf("Remove container %s error %v", order.Name, err)
 		err := errors.New(fmt.Sprintf("Remove container %s error %v", order.Name, err))
 		ErrorPublic(err)
 		err = ackPublic(Client, AckMsgFormat("container", order.Name, "remove", 0))
@@ -338,7 +339,7 @@ func (s *sockerImp) ContainerLogs(client mqtt.Client, order Order) {
 	container := ContainerImp{}
 	err := container.Logs(client, order.Name)
 	if err != nil {
-		log.Mylog.Errorf("Check container logs error %v", err)
+		log.Errorf("Check container logs error %v", err)
 		err := errors.New(fmt.Sprintf("Check container logs error %v", err))
 		ErrorPublic(err)
 		err = ackPublic(client, AckMsgFormat("container", order.Name, "logs", 0))

@@ -1,10 +1,10 @@
 package service
 
 import (
-	"SockerMQTTWatcher/log"
 	"encoding/json"
 	"errors"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"os"
 	"os/exec"
@@ -39,7 +39,7 @@ func (c *ContainerImp) Run(order Order) error {
 	content := order.Content
 	err := json.Unmarshal([]byte(content), &c)
 	if err != nil {
-		log.Mylog.Errorf("Json Unmarshal run order error %v", err)
+		log.Errorf("Json Unmarshal run order error %v", err)
 	}
 
 	_, ok := Containers[c.Name]
@@ -67,7 +67,7 @@ func (c *ContainerImp) Run(order Order) error {
 	cmd := exec.Command("/bin/sh", "-c", runCmd)
 	err = cmd.Run()
 	if err != nil {
-		log.Mylog.Errorf("Start command %s error %v", runCmd, err)
+		log.Errorf("Start command %s error %v", runCmd, err)
 		ErrorPublic(err)
 		return err
 	}
@@ -98,7 +98,7 @@ func (c *ContainerImp) Stop(containerName string) error {
 
 	err := cmd.Run()
 	if err != nil {
-		log.Mylog.Errorf("Exec command %s error %v", cmd.String(), err)
+		log.Errorf("Exec command %s error %v", cmd.String(), err)
 		ErrorPublic(err)
 		return err
 	}
@@ -186,12 +186,12 @@ func FillContainerInfo(container *ContainerImp) {
 	n, err := file.Read(buf)
 	conf := buf[:n]
 	if err != nil {
-		log.Mylog.Errorf("Read file %s error %v", confPath, err)
+		log.Errorf("Read file %s error %v", confPath, err)
 	}
 	fmt.Println(string(conf))
 	err = json.Unmarshal(conf, &container)
 	if err != nil {
-		log.Mylog.Errorf("Json unmarshal error %v", err)
+		log.Errorf("Json unmarshal error %v", err)
 	}
 	fmt.Printf("%s %s %s %s %s %s", container.CreatTime, container.Status, container.Pid, container.ID, container.Name, container.Command)
 }
@@ -208,7 +208,7 @@ func Marshal1() string {
 	}
 	bytes, err := json.Marshal(&container)
 	if err != nil {
-		log.Mylog.Errorf("%v", err)
+		log.Errorf("%v", err)
 	}
 	return string(bytes)
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"SockerMQTTWatcher/command"
-	log2 "SockerMQTTWatcher/log"
 	log "github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"os"
@@ -26,9 +25,9 @@ func main() {
 
 	//output args you had just type-in
 	sockerCommand := os.Args
-	log2.Mylog.Printf("args: %s", sockerCommand)
+	log.Printf("args: %s", sockerCommand)
 
 	if err := app.Run(os.Args); err != nil{
-		log2.Mylog.Fatal(err)
+		log.Fatal(err)
 	}
 }
