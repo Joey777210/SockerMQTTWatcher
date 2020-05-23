@@ -24,7 +24,7 @@ func ErrorMsgPublic(message string) {
 }
 
 func errSave(error error) {
-	errfilePath := fmt.Sprintf(DefaultInfoPath, "/mqtterr")
+	errfilePath := fmt.Sprintf(DefaultInfoPath, "mqtterr")
 	var file *os.File
 	file, err := os.Open(errfilePath)
 	if err != nil {

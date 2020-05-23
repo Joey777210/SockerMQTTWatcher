@@ -55,3 +55,12 @@ func TestSockerImp_ImageLs(t *testing.T) {
 	s := sockerImp{}
 	s.ImageLs(client)
 }
+
+func TestSockerImp_ContainerStop(t *testing.T) {
+	order := Order{
+		Order:   "run",
+		Content: Marshal1(),
+	}
+	s := sockerImp{}
+	s.ContainerStop(order)
+}

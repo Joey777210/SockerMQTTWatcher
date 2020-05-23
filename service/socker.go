@@ -5,9 +5,9 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/fsnotify/fsnotify"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -15,6 +15,7 @@ import (
 var (
 	DefaultInfoPath = "/var/run/socker/%s"
 	DefaultRootPath = "/root"
+	DefaultLogPath	= "/var/run/socker/sockerlog"
 )
 
 type socker interface {
@@ -30,44 +31,11 @@ type sockerImp struct {
 
 //
 func (s *sockerImp) RunNewContainer(order Order) {
-	content := order.Content
 	container := ContainerImp{}
-	err := json.Unmarshal([]byte(content), &container)
+	err := container.Run(order)
 	if err != nil {
-		log.Errorf("Json Unmarshal run order error %v", err)
+		log.Errorf("Run new container %s error %v", order.Target, err)
 	}
-
-	_, ok := Containers[container.Name]
-	if ok {
-		ErrorPublic(err)
-		return
-	}
-
-	base := "sudo socker run -d -mqtt %s -net testbridge -p %s --name %s %s %s"
-	resource := ""
-	if container.Memory != ""{
-		resource += "-m " + container.Memory
-	}
-	if container.CpuSet != ""{
-		resource += " -cpuset " + container.CpuSet
-	}
-	if container.CpuShare != ""{
-		resource += " -cpushare " + container.CpuShare
-	}
-	runCmd := fmt.Sprintf(base, resource, container.PortMapping[0], container.Name, container.Image, container.Command)
-
-	cmd := exec.Command("/bin/sh", "-c", runCmd)
-	err = cmd.Run()
-
-	FillContainerInfo(&container)
-	if err != nil {
-		log.Errorf("Start command %s error %v", runCmd, err)
-	}
-	Containers[container.Name] = container
-
-	//TODO
-	//Listen on contianer Topic
-	//ThreadPool
 }
 
 func (s *sockerImp) ContainerLs(client mqtt.Client) {
@@ -139,37 +107,117 @@ func (s *sockerImp)Delete() {
 }
 
 func (s *sockerImp)ImageRm(order Order) {
-	content := order.Content
 	image := image{}
-	err := json.Unmarshal([]byte(content), &image)
+	err := image.Remove(order)
 	if err != nil {
-		log.Errorf("Json unmarshal error %v", err)
-		ErrorPublic(err)
-	}
-
-	imageName := image.Name + ".tar"
-	imagePath := DefaultRootPath + "/" +imageName
-	err = os.Remove(imagePath)
-	if err != nil {
-		log.Errorf("Remove Image %s error %v", imagePath, err)
-		ErrorPublic(err)
+		log.Errorf("Remove image %s error %v", order.Target, err)
 	}
 }
 
 func (s *sockerImp)ContainerStop(order Order) {
-	content := order.Content
 	container := ContainerImp{}
-	err := json.Unmarshal([]byte(content), &container)
+	err := container.Stop(order)
 	if err != nil {
-		log.Errorf("Json unmarshal error %v", err)
-		ErrorPublic(err)
+		log.Errorf("Stop container %s error %v", order.Target, err)
 	}
-	cmd := exec.Command("/bin/sh", "-c", "sudo socker stop > /var/run/socker/sockerlog", container.Name)
-	err = cmd.Run()
-	if err != nil {
-		log.Errorf("Exec command %s error %v", cmd.String(), err)
-		ErrorPublic(err)
+}
+
+func LogAutoPub() {
+	isExist, _ := PathExists(DefaultLogPath)
+	if !isExist {
+		if _, err := os.Create(DefaultLogPath); err != nil {
+			log.Errorf("Create file %s error %v", DefaultLogPath, err)
+			ErrorMsgPublic(fmt.Sprintf("Create file %s error %v", DefaultLogPath, err))
+		}
 	}
 
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Errorf("New watcher error %v", err)
+	}
+	defer watcher.Close()
 
+	//done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				log.Infoln("event: ", event)
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					message := readFile(DefaultLogPath)
+					fmt.Println(message)
+					//err := MessagePublic(client, GetTopic(SysGWLogPub), message)
+					if err != nil {
+						log.Errorf("Send message error %v", err)
+					}
+				}
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				log.Infof("Watch file error1 %v", err)
+			}
+		}
+	}()
+
+	err = watcher.Add(DefaultLogPath)
+	if err != nil {
+		log.Errorf("Watch file error2 %v", err)
+	}
+	//<-done
+	//循环
+	select {}
+}
+
+func PathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func readFile(fileName string) string {
+
+	var message []byte
+	file, err := os.Open(fileName)
+	if err != nil {
+		fmt.Printf("Open file %s error %v \n", fileName, err)
+	}
+	defer file.Close()
+	buf := make([]byte, 1024)
+	for {
+		n, _ := file.Read(buf)
+		if 0 == n {
+			break
+		}
+		message = append(message, buf[:n]...)
+	}
+	////clear file
+	//_ = os.Truncate(fileName, 0)
+	//_, _ = file.Seek(0, 0)
+	//after test, don't need clear!!
+	return string(message)
+}
+
+func (s *sockerImp) ContainerCommit(order Order) {
+	container := ContainerImp{}
+	err := container.Commit(order)
+	if err != nil {
+		log.Errorf("Commit container error %v", err)
+	}
+}
+
+func (s *sockerImp) ContainerRemove(order Order) {
+	container := ContainerImp{}
+	err := container.Remove(order)
+	if err != nil {
+		log.Errorf("Remove container error %v", err)
+	}
 }

@@ -74,7 +74,9 @@ func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 		case "stop":
 			socker.ContainerStop(order)
 		case "commit":
+			socker.ContainerCommit(order)
 		case "remove":
+			socker.ContainerRemove(order)
 		case "ls":
 			socker.ContainerLs(client)
 		case "log":

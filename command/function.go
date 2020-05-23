@@ -8,6 +8,7 @@ import (
 
 func start(gatewayName string) {
 	InitSubnet()
+	go service.LogAutoPub()
 	service.Connect(gatewayName)
 	//service.Containers = make(map[string]service.ContainerImp)
 }

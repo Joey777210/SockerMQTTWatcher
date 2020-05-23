@@ -2,9 +2,11 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"os"
+	"os/exec"
 )
 
 var Containers = make(map[string]ContainerImp)
@@ -15,6 +17,7 @@ type Container interface {
 	Commit(containerName string) error
 	Log(containerName string) error
 }
+
 
 type ContainerImp struct {
 	ID		string			`json:"id"`
@@ -30,18 +33,122 @@ type ContainerImp struct {
 	PortMapping	[]string	`json:"portmapping"`
 }
 
-func (c *ContainerImp) Stop(containerName string) error {
+
+func (c *ContainerImp) Run(order Order) error {
+	content := order.Content
+	err := json.Unmarshal([]byte(content), &c)
+	if err != nil {
+		log.Errorf("Json Unmarshal run order error %v", err)
+	}
+
+	_, ok := Containers[c.Name]
+	if ok {
+		if Containers[c.Name].Status == "runnning" {
+			err := errors.New("container already running")
+			ErrorPublic(err)
+			return err
+		}
+	}
+
+	base := "sudo socker run -d -mqtt %s -net testbridge -p %s --name %s %s %s"
+	resource := ""
+	if c.Memory != ""{
+		resource += "-m " + c.Memory
+	}
+	if c.CpuSet != ""{
+		resource += " -cpuset " + c.CpuSet
+	}
+	if c.CpuShare != ""{
+		resource += " -cpushare " + c.CpuShare
+	}
+	runCmd := fmt.Sprintf(base, resource, c.PortMapping[0], c.Name, c.Image, c.Command)
+
+	cmd := exec.Command("/bin/sh", "-c", runCmd)
+	err = cmd.Run()
+	if err != nil {
+		log.Errorf("Start command %s error %v", runCmd, err)
+		ErrorPublic(err)
+		return err
+	}
+	FillContainerInfo(c)
+
+	Containers[c.Name] = *c
+
 	//TODO
+	//Listen on contianer Topic
+	//ThreadPool
 	return nil
 }
 
-func (c *ContainerImp) Remove(containerName string) error {
-	//TODO
+func (c *ContainerImp) Stop(order Order) error {
+	content := order.Content
+	err := json.Unmarshal([]byte(content), &c)
+	if err != nil {
+		log.Errorf("Json unmarshal error %v", err)
+		ErrorPublic(err)
+		return err
+	}
+	_, ok := Containers[c.Name]
+	if !ok {
+		err := errors.New("no such container")
+		ErrorPublic(err)
+		return err
+	}
+
+	command := "sudo /bin/sh -c \"socker stop " + c.Name + " > " + DefaultLogPath +"\""
+	cmd := exec.Command("/bin/sh", "-c", command)
+
+	err = cmd.Run()
+	if err != nil {
+		log.Errorf("Exec command %s error %v", cmd.String(), err)
+		ErrorPublic(err)
+		return err
+	}
+	c.Status = "stopped"
+
 	return nil
 }
 
-func (c *ContainerImp) Commit(containerName string) error {
+func (c *ContainerImp) Remove(order Order) error {
+	content := order.Content
+	err := json.Unmarshal([]byte(content), c)
+	if err != nil {
+		ErrorPublic(err)
+		return err
+	}
+
+	err = isExist(c.Name)
+	if err != nil {
+		return err
+	}
 	//TODO
+	//xian panduan status
+	//ranhou  zhixing  mingling
+	return nil
+}
+
+func (c *ContainerImp) Commit(order Order) error {
+	content := order.Content
+	err := json.Unmarshal([]byte(content), c)
+	if err != nil {
+		ErrorPublic(err)
+		return err
+	}
+
+	err = isExist(c.Name)
+	if err != nil {
+		return err
+	}
+
+	command := "sudo /bin/sh -c \"socker commit " + c.Name + " > " + DefaultLogPath +"\""
+	cmd := exec.Command("/bin/sh", "-c", command)
+	err = cmd.Run()
+	if err != nil {
+		ErrorPublic(err)
+		return err
+	}
+	s := sockerImp{}
+	s.ImageLs(client)
 	return nil
 }
 
@@ -82,4 +189,13 @@ func Marshal1() string {
 		log.Errorf("%v", err)
 	}
 	return string(bytes)
+}
+
+func isExist(containerName string) error {
+	_, ok := Containers[containerName]
+	if !ok {
+		err := errors.New("no such container")
+		ErrorPublic(err)
+		return err
+	}
 }
