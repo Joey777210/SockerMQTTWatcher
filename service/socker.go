@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -34,8 +35,22 @@ func (s *sockerImp) RunNewContainer(order Order) {
 	container := ContainerImp{}
 	err := container.Run(order)
 	if err != nil {
-		log.Errorf("Run new container %s error %v", order.Target, err)
+		log.Errorf("Run new container %s error %v", order.Name, err)
+		err := errors.New(fmt.Sprintf("Run new container %s error %v", order.Name, err))
+		ErrorPublic(err)
+		err = ackPublic(client, AckMsgFormat("container", order.Name, "run", 0))
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Ack public error %v", err))
+			ErrorPublic(err)
+		}
 	}
+
+	err = ackPublic(client, AckMsgFormat("container", order.Name, "run", 1))
+	if err != nil {
+		err = errors.New(fmt.Sprintf("Ack public error %v", err))
+		ErrorPublic(err)
+	}
+	MessagePublic(client, GetTopic(SysStatusPub), "online")
 }
 
 func (s *sockerImp) ContainerLs(client mqtt.Client) {
@@ -47,6 +62,18 @@ func (s *sockerImp) ContainerLs(client mqtt.Client) {
 	message := string(bytes)
 	err = MessagePublic(client, GetTopic(SysCtnlsPub), message)
 	if err != nil {
+		err := errors.New(fmt.Sprintf("Container ls error %v", err))
+		ErrorPublic(err)
+		err = ackPublic(client, AckMsgFormat("container", "", "stop", 0))
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Ack public error %v", err))
+			ErrorPublic(err)
+		}
+	}
+
+	err = ackPublic(client, AckMsgFormat("container", "", "stop", 1))
+	if err != nil {
+		err = errors.New(fmt.Sprintf("Ack public error %v", err))
 		ErrorPublic(err)
 	}
 }
@@ -55,18 +82,42 @@ func (s *sockerImp) ImageLs(client mqtt.Client) {
 	err := findImages()
 	if err != nil {
 		log.Errorf("Find images error %v", err)
+		err := errors.New(fmt.Sprintf("Find images error %v", err))
 		ErrorPublic(err)
+		err = ackPublic(client, AckMsgFormat("image", "", "ls", 0))
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Ack public error %v", err))
+			ErrorPublic(err)
+		}
 	}
 
 	bytes, err := json.Marshal(Images)
 	if err != nil {
 		log.Errorf("Json marshal images error %v", err)
+		err := errors.New(fmt.Sprintf("Json marshal images error %v", err))
 		ErrorPublic(err)
+		err = ackPublic(client, AckMsgFormat("image", "", "ls", 0))
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Ack public error %v", err))
+			ErrorPublic(err)
+		}
 	}
 	message := string(bytes)
 	err = MessagePublic(client, GetTopic(SysImglsPub), message)
 	if err != nil {
 		log.Errorf("Message Public image ls error %v", err)
+		err := errors.New(fmt.Sprintf("Image ls error %v", err))
+		ErrorPublic(err)
+		err = ackPublic(client, AckMsgFormat("image", "", "ls", 0))
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Ack public error %v", err))
+			ErrorPublic(err)
+		}
+	}
+
+	err = ackPublic(client, AckMsgFormat("image", "", "ls", 1))
+	if err != nil {
+		err = errors.New(fmt.Sprintf("Ack public error %v", err))
 		ErrorPublic(err)
 	}
 }
@@ -108,18 +159,46 @@ func (s *sockerImp)Delete() {
 
 func (s *sockerImp)ImageRm(order Order) {
 	image := image{}
-	err := image.Remove(order)
+	err := image.Remove(order.Name)
 	if err != nil {
-		log.Errorf("Remove image %s error %v", order.Target, err)
+		log.Errorf("Remove image %s error %v", order.Name, err)
+		err := errors.New(fmt.Sprintf("Remove image %s error %v", order.Name, err))
+		ErrorPublic(err)
+		err = ackPublic(client, AckMsgFormat("image", order.Name, "remove", 0))
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Ack public error %v", err))
+			ErrorPublic(err)
+		}
+	}
+
+	err = ackPublic(client, AckMsgFormat("image", order.Name, "remove", 1))
+	if err != nil {
+		err = errors.New(fmt.Sprintf("Ack public error %v", err))
+		ErrorPublic(err)
 	}
 }
 
 func (s *sockerImp)ContainerStop(order Order) {
 	container := ContainerImp{}
-	err := container.Stop(order)
+	err := container.Stop(order.Name)
 	if err != nil {
-		log.Errorf("Stop container %s error %v", order.Target, err)
+		log.Errorf("Stop container %s error %v", order.Name, err)
+		err := errors.New(fmt.Sprintf("Stop container %s error %v", order.Name, err))
+		ErrorPublic(err)
+		err = ackPublic(client, AckMsgFormat("container", order.Name, "stop", 0))
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Ack public error %v", err))
+			ErrorPublic(err)
+		}
 	}
+
+	err = ackPublic(client, AckMsgFormat("container", order.Name, "stop", 1))
+	if err != nil {
+		err = errors.New(fmt.Sprintf("Ack public error %v", err))
+		ErrorPublic(err)
+	}
+
+	MessagePublic(client, GetTopic(SysStatusPub), "offline")
 }
 
 func LogAutoPub() {
@@ -147,11 +226,12 @@ func LogAutoPub() {
 				}
 				log.Infoln("event: ", event)
 				if event.Op&fsnotify.Write == fsnotify.Write {
-					message := readFile(DefaultLogPath)
+					message, err := readFile(DefaultLogPath)
 					fmt.Println(message)
-					//err := MessagePublic(client, GetTopic(SysGWLogPub), message)
+					err = MessagePublic(client, GetTopic(SysGWLogPub), message)
 					if err != nil {
 						log.Errorf("Send message error %v", err)
+						ErrorPublic(err)
 					}
 				}
 			case err, ok := <-watcher.Errors:
@@ -183,17 +263,23 @@ func PathExists(path string) (bool, error) {
 	return false, err
 }
 
-func readFile(fileName string) string {
+func readFile(fileName string) (string, error) {
 
 	var message []byte
 	file, err := os.Open(fileName)
 	if err != nil {
-		fmt.Printf("Open file %s error %v \n", fileName, err)
+		log.Errorf("Open file %s error %v \n", fileName, err)
+		ErrorPublic(err)
+		return "", err
 	}
 	defer file.Close()
 	buf := make([]byte, 1024)
 	for {
-		n, _ := file.Read(buf)
+		n, err := file.Read(buf)
+		if err != nil {
+			ErrorPublic(err)
+			return "", err
+		}
 		if 0 == n {
 			break
 		}
@@ -203,21 +289,69 @@ func readFile(fileName string) string {
 	//_ = os.Truncate(fileName, 0)
 	//_, _ = file.Seek(0, 0)
 	//after test, don't need clear!!
-	return string(message)
+	return string(message), nil
 }
 
 func (s *sockerImp) ContainerCommit(order Order) {
 	container := ContainerImp{}
-	err := container.Commit(order)
+	err := container.Commit(order.Name)
 	if err != nil {
-		log.Errorf("Commit container error %v", err)
+		log.Errorf("Commit container %s error %v", order.Name, err)
+		err := errors.New(fmt.Sprintf("Commit container %s error %v", order.Name, err))
+		ErrorPublic(err)
+		err = ackPublic(client, AckMsgFormat("container", order.Name, "commit", 0))
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Ack public error %v", err))
+			ErrorPublic(err)
+		}
+	}
+
+	err = ackPublic(client, AckMsgFormat("container", order.Name, "commit", 1))
+	if err != nil {
+		err = errors.New(fmt.Sprintf("Ack public error %v", err))
+		ErrorPublic(err)
 	}
 }
 
 func (s *sockerImp) ContainerRemove(order Order) {
 	container := ContainerImp{}
-	err := container.Remove(order)
+	err := container.Remove(order.Name)
 	if err != nil {
-		log.Errorf("Remove container error %v", err)
+		log.Errorf("Remove container %s error %v", order.Name, err)
+		err := errors.New(fmt.Sprintf("Remove container %s error %v", order.Name, err))
+		ErrorPublic(err)
+		err = ackPublic(client, AckMsgFormat("container", order.Name, "remove", 0))
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Ack public error %v", err))
+			ErrorPublic(err)
+		}
+	}
+
+	err = ackPublic(client, AckMsgFormat("container", order.Name, "remove", 1))
+	if err != nil {
+		err = errors.New(fmt.Sprintf("Ack public error %v", err))
+		ErrorPublic(err)
 	}
 }
+
+func (s *sockerImp) ContainerLogs(client mqtt.Client, order Order) {
+	container := ContainerImp{}
+	err := container.Logs(client, order.Name)
+	if err != nil {
+		log.Errorf("Check container logs error %v", err)
+		err := errors.New(fmt.Sprintf("Check container logs error %v", err))
+		ErrorPublic(err)
+		err = ackPublic(client, AckMsgFormat("container", order.Name, "logs", 0))
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Ack public error %v", err))
+			ErrorPublic(err)
+		}
+	}
+
+	err = ackPublic(client, AckMsgFormat("container", order.Name, "logs", 1))
+	if err != nil {
+		err = errors.New(fmt.Sprintf("Ack public error %v", err))
+		ErrorPublic(err)
+	}
+}
+

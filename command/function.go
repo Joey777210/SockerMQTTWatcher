@@ -8,9 +8,10 @@ import (
 
 func start(gatewayName string) {
 	InitSubnet()
-	go service.LogAutoPub()
 	service.Connect(gatewayName)
-	//service.Containers = make(map[string]service.ContainerImp)
+	go service.LogAutoPub()
+	//li xian jian ce
+	//TODO listen port:8888, resend data
 }
 
 func InitSubnet() {

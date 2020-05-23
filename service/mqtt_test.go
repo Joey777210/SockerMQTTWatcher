@@ -64,3 +64,12 @@ func TestSockerImp_ContainerStop(t *testing.T) {
 	s := sockerImp{}
 	s.ContainerStop(order)
 }
+
+func TestSockerImp_ContainerLogs(t *testing.T) {
+	s := sockerImp{}
+	order := Order{
+		Order:   "run",
+		Content: Marshal1(),
+	}
+	s.ContainerLogs(client, order)
+}

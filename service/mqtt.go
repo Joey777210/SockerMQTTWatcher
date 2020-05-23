@@ -80,9 +80,7 @@ func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 		case "ls":
 			socker.ContainerLs(client)
 		case "log":
-		default:
-			//TODO
-			//error public
+			socker.ContainerLogs(client, order)
 		}
 	case "image":
 		switch order.Order {
@@ -100,10 +98,3 @@ func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 	}
 }
 
-func MessagePublic(client mqtt.Client, topic string, message string) error {
-	if token := client.Publish(topic, 0, false, message); token.Wait() && token.Error() != nil {
-		log.Errorf("Client publish on Topic %s error %v\n", topic, token.Error())
-		return token.Error()
-	}
-	return nil
-}

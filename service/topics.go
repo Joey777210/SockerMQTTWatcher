@@ -13,12 +13,13 @@ var (
 	SysOrderSub		= "sysOrderSub"
 	SysStatusPub	= "sysStatusPub"
 	SysLogPub		= "sysLogPub"
-	//SysGWLogPub		= "sysGWLogPub"
+	SysGWLogPub		= "sysGWLogPub"
 
 	SysDataPub		= "sysDataPub"
 	SysCtnlsPub		= "sysCtnlsPub"
 	SysImglsPub		= "sysImglsPub"
 	SysGWErrPub		= "sysGWErrPub"
+	SysACKPub		= "sysACKPub"
 	//SysCNErrPub		= "sysCNErrPub"
 )
 
@@ -27,16 +28,18 @@ var topics = map[string]string {
 	"sysDataPub"	: "sys/{GW}/{CN}/msg",			//data up
 	"sysStatusPub"	: "sys/{GW}/{CN}/online",		//online
 	"sysLogPub"		: "sys/{GW}/{CN}/log",			//container log
-	//"sysGWLogPub"	: "sys/{GW}/log",				//gateway (socker) log
+	"sysGWLogPub"	: "sys/{GW}/log",				//gateway (socker) log
 	"sysCtnlsPub"	: "sys/{GW}/ctnls",				//pub container ls
 	"sysImglsPub"	: "sys/{GW}/imgls",				//pub container ls
 	"sysGWErrPub"	: "sys/{GW}/err",				//gateway err
+	"sysACKPub"		: "sys/{GW/ack",
 	//"sysCNErrPub"	: "sys/{GW}/{CN}/err",			//container err
 }
 
 type Order struct {
 	Target	string		`json:"target"`		//container/image/network
 	Order   string		`json:"order"`		//run/stop/ls...
+	Name	string		`json:"name"`		//bird...
 	Content string		`json:"content"`	//memory....
 }
 

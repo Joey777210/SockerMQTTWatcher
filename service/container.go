@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"os"
 	"os/exec"
 )
@@ -71,8 +72,9 @@ func (c *ContainerImp) Run(order Order) error {
 		return err
 	}
 	FillContainerInfo(c)
-
 	Containers[c.Name] = *c
+
+	
 
 	//TODO
 	//Listen on contianer Topic
@@ -80,14 +82,11 @@ func (c *ContainerImp) Run(order Order) error {
 	return nil
 }
 
-func (c *ContainerImp) Stop(order Order) error {
-	content := order.Content
-	err := json.Unmarshal([]byte(content), &c)
-	if err != nil {
-		log.Errorf("Json unmarshal error %v", err)
-		ErrorPublic(err)
-		return err
+func (c *ContainerImp) Stop(containerName string) error {
+	if containerName == "" {
+		return errors.New("empty name error")
 	}
+	c.Name = containerName
 	_, ok := Containers[c.Name]
 	if !ok {
 		err := errors.New("no such container")
@@ -98,7 +97,7 @@ func (c *ContainerImp) Stop(order Order) error {
 	command := "sudo /bin/sh -c \"socker stop " + c.Name + " > " + DefaultLogPath +"\""
 	cmd := exec.Command("/bin/sh", "-c", command)
 
-	err = cmd.Run()
+	err := cmd.Run()
 	if err != nil {
 		log.Errorf("Exec command %s error %v", cmd.String(), err)
 		ErrorPublic(err)
@@ -109,33 +108,39 @@ func (c *ContainerImp) Stop(order Order) error {
 	return nil
 }
 
-func (c *ContainerImp) Remove(order Order) error {
-	content := order.Content
-	err := json.Unmarshal([]byte(content), c)
+func (c *ContainerImp) Remove(containerName string) error {
+	if containerName == "" {
+		return errors.New("empty name error")
+	}
+	c.Name = containerName
+	err := isExist(c.Name)
 	if err != nil {
-		ErrorPublic(err)
 		return err
 	}
 
-	err = isExist(c.Name)
-	if err != nil {
+	if c.Status == "running" {
+		err = errors.New("you can't remove a running container, please stop the container first!")
+		ErrorPublic(err)
 		return err
+	} else if c.Status == "stopped" {
+		command := "sudo sh -c \"sudo socker remove" + c.Name + "\""
+		cmd := exec.Command("bin/sh", "-c", command)
+		err = cmd.Run()
+		if err != nil {
+			ErrorPublic(err)
+			return err
+		}
+		delete(Containers, c.Name)
 	}
-	//TODO
-	//xian panduan status
-	//ranhou  zhixing  mingling
 	return nil
 }
 
-func (c *ContainerImp) Commit(order Order) error {
-	content := order.Content
-	err := json.Unmarshal([]byte(content), c)
-	if err != nil {
-		ErrorPublic(err)
-		return err
+func (c *ContainerImp) Commit(containerName string) error {
+	if containerName == "" {
+		return errors.New("empty name error")
 	}
-
-	err = isExist(c.Name)
+	c.Name = containerName
+	err := isExist(c.Name)
 	if err != nil {
 		return err
 	}
@@ -152,8 +157,26 @@ func (c *ContainerImp) Commit(order Order) error {
 	return nil
 }
 
-func (c *ContainerImp) Log(containerName string) error {
-	//TODO
+func (c *ContainerImp) Logs(client mqtt.Client, containerName string) error {
+	if containerName == "" {
+		return errors.New("empty name error")
+	}
+
+	c.Name = containerName
+	err := isExist(c.Name)
+	if err != nil {
+		return err
+	}
+
+	logPath := fmt.Sprintf(DefaultInfoPath, c.Name) + "container.log"
+	logs, err := readFile(logPath)
+	err = MessagePublic(client, GetTopic(SysLogPub), logs)
+	if err != nil {
+		err := errors.New(fmt.Sprintf("Logs public error %v", err))
+		ErrorPublic(err)
+		return err
+	}
+
 	return nil
 }
 
@@ -198,4 +221,5 @@ func isExist(containerName string) error {
 		ErrorPublic(err)
 		return err
 	}
+	return nil
 }
