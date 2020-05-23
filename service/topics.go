@@ -31,7 +31,7 @@ var topics = map[string]string {
 	"sysCtnlsPub"	: "sys/{GW}/ctnls",				//pub container ls
 	"sysImglsPub"	: "sys/{GW}/imgls",				//pub container ls
 	"sysGWErrPub"	: "sys/{GW}/err",				//gateway err
-	"sysACKPub"		: "sys/{GW/ack",
+	"sysACKPub"		: "sys/{GW}/ack",
 	//"sysCNErrPub"	: "sys/{GW}/{CN}/err",			//container err
 }
 

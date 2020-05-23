@@ -1,9 +1,9 @@
 package service
 
 import (
+	"SockerMQTTWatcher/log"
 	"crypto/tls"
 	"encoding/json"
-	log "github.com/Sirupsen/logrus"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"time"
 )
@@ -50,7 +50,7 @@ func Connect(gatewayName string) {
 
 func OnConnect(client mqtt.Client) {
 	if token := client.Subscribe(GetTopic(SysOrderSub), 0, onMessageReceived); token.Wait() && token.Error() != nil {
-		log.Errorf("mqtt Client subscribe topic %s Error %v", GetTopic(SysOrderSub), token.Error())
+		log.Mylog.Errorf("mqtt Client subscribe topic %s Error %v", GetTopic(SysOrderSub), token.Error())
 	}
 }
 
@@ -59,7 +59,7 @@ func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 	order := Order{}
 	err := json.Unmarshal(msg, &order)
 	if err != nil {
-		log.Errorf("Unmarshal order error %v", err)
+		log.Mylog.Errorf("Unmarshal order error %v", err)
 	}
 
 	socker := sockerImp{}

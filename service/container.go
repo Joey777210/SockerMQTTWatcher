@@ -1,10 +1,10 @@
 package service
 
 import (
+	"SockerMQTTWatcher/log"
 	"encoding/json"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"os"
 	"os/exec"
@@ -39,7 +39,7 @@ func (c *ContainerImp) Run(order Order) error {
 	content := order.Content
 	err := json.Unmarshal([]byte(content), &c)
 	if err != nil {
-		log.Errorf("Json Unmarshal run order error %v", err)
+		log.Mylog.Errorf("Json Unmarshal run order error %v", err)
 	}
 
 	_, ok := Containers[c.Name]
@@ -67,13 +67,12 @@ func (c *ContainerImp) Run(order Order) error {
 	cmd := exec.Command("/bin/sh", "-c", runCmd)
 	err = cmd.Run()
 	if err != nil {
-		log.Errorf("Start command %s error %v", runCmd, err)
+		log.Mylog.Errorf("Start command %s error %v", runCmd, err)
 		ErrorPublic(err)
 		return err
 	}
 	FillContainerInfo(c)
 	Containers[c.Name] = *c
-
 
 
 	//TODO
@@ -94,12 +93,12 @@ func (c *ContainerImp) Stop(containerName string) error {
 		return err
 	}
 
-	command := "sudo /bin/sh -c \"socker stop " + c.Name + " > " + DefaultLogPath +"\""
-	cmd := exec.Command("/bin/sh", "-c", command)
+	command1 := "sudo /bin/sh -c \"socker stop " + c.Name + " > " + DefaultLogPath +"\""
+	cmd := exec.Command("/bin/sh", "-c", command1)
 
 	err := cmd.Run()
 	if err != nil {
-		log.Errorf("Exec command %s error %v", cmd.String(), err)
+		log.Mylog.Errorf("Exec command %s error %v", cmd.String(), err)
 		ErrorPublic(err)
 		return err
 	}
@@ -187,12 +186,12 @@ func FillContainerInfo(container *ContainerImp) {
 	n, err := file.Read(buf)
 	conf := buf[:n]
 	if err != nil {
-		log.Errorf("Read file %s error %v", confPath, err)
+		log.Mylog.Errorf("Read file %s error %v", confPath, err)
 	}
 	fmt.Println(string(conf))
 	err = json.Unmarshal(conf, &container)
 	if err != nil {
-		log.Errorf("Json unmarshal error %v", err)
+		log.Mylog.Errorf("Json unmarshal error %v", err)
 	}
 	fmt.Printf("%s %s %s %s %s %s", container.CreatTime, container.Status, container.Pid, container.ID, container.Name, container.Command)
 }
@@ -209,7 +208,7 @@ func Marshal1() string {
 	}
 	bytes, err := json.Marshal(&container)
 	if err != nil {
-		log.Errorf("%v", err)
+		log.Mylog.Errorf("%v", err)
 	}
 	return string(bytes)
 }

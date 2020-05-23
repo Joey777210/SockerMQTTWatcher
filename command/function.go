@@ -1,16 +1,17 @@
 package command
 
 import (
+	"SockerMQTTWatcher/log"
 	"SockerMQTTWatcher/service"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/exec"
 	"time"
 )
 
 func start(gatewayName string) {
+	log.SetMylog()
 	InitSubnet()
 	service.Connect(gatewayName)
 	go service.LogAutoPub()
@@ -19,12 +20,16 @@ func start(gatewayName string) {
 	//TODO listen port:8888, resend data
 }
 
+func stop() {
+
+}
+
 func InitSubnet() {
 	createCmd := "sudo socker network create --driver bridge --subnet 192.168.10.1/24 testbridge"
 	cmd := exec.Command("/bin/sh", "-c", createCmd)
 	err := cmd.Start()
 	if err != nil {
-		log.Errorf("Start command %s error %v", createCmd, err)
+		log.Mylog.Errorf("Start command %s error %v", createCmd, err)
 	}
 }
 
@@ -46,7 +51,5 @@ func containerLiveCheck() {
 
 		time.Sleep(100*time.Second)
 	}
-
-
 
 }

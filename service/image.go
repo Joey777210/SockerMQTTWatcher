@@ -1,8 +1,8 @@
 package service
 
 import (
+	"SockerMQTTWatcher/log"
 	"errors"
-	log "github.com/Sirupsen/logrus"
 	"os"
 )
 
@@ -24,7 +24,7 @@ func (i *image) Remove(iName string) error {
 	imagePath := DefaultRootPath + "/" +imageName
 	err := os.Remove(imagePath)
 	if err != nil {
-		log.Errorf("Remove Image %s error %v", imagePath, err)
+		log.Mylog.Errorf("Remove Image %s error %v", imagePath, err)
 		ErrorPublic(err)
 	}
 	delete(Images, i.Name)
