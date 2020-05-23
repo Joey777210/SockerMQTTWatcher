@@ -14,7 +14,6 @@ var (
 	SysStatusPub	= "sysStatusPub"
 	SysLogPub		= "sysLogPub"
 	SysGWLogPub		= "sysGWLogPub"
-
 	SysDataPub		= "sysDataPub"
 	SysCtnlsPub		= "sysCtnlsPub"
 	SysImglsPub		= "sysImglsPub"
@@ -47,6 +46,13 @@ func GetTopic(key string) string {
 	return topics[key]
 }
 
+func GetTopicCN(key string, containerName string) string {
+	topic := topics[key]
+	topic = strings.Replace(topic, "{CN}", containerName, -1)
+	return topic
+}
+
+
 func Replace(gatewayName string) {
 	for n := range topics {
 		topics[n] = strings.Replace(topics[n], "{GW}", gatewayName, -1)
@@ -55,3 +61,4 @@ func Replace(gatewayName string) {
 		fmt.Print(topics[n] + "\n")
 	}
 }
+

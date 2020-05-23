@@ -9,7 +9,7 @@ import (
 
 func ErrorPublic(err error) {
 	errSave(err)
-	if token := client.Publish(GetTopic(SysGWErrPub), 0, false, err.Error()); token.Wait() && token.Error() != nil {
+	if token := Client.Publish(GetTopic(SysGWErrPub), 0, false, err.Error()); token.Wait() && token.Error() != nil {
 		log.Errorf("Client publish on Topic %s error %v\n", GetTopic(SysGWErrPub), token.Error())
 		errSave(token.Error())
 	}
@@ -17,7 +17,7 @@ func ErrorPublic(err error) {
 
 func ErrorMsgPublic(message string) {
 	errMsgSave(message)
-	if token := client.Publish(GetTopic(SysGWErrPub), 0, false, message); token.Wait() && token.Error() != nil {
+	if token := Client.Publish(GetTopic(SysGWErrPub), 0, false, message); token.Wait() && token.Error() != nil {
 		log.Errorf("Client publish on Topic %s error %v\n", GetTopic(SysGWErrPub), token.Error())
 		errSave(token.Error())
 	}

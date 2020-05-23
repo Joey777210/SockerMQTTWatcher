@@ -38,19 +38,19 @@ func (s *sockerImp) RunNewContainer(order Order) {
 		log.Errorf("Run new container %s error %v", order.Name, err)
 		err := errors.New(fmt.Sprintf("Run new container %s error %v", order.Name, err))
 		ErrorPublic(err)
-		err = ackPublic(client, AckMsgFormat("container", order.Name, "run", 0))
+		err = ackPublic(Client, AckMsgFormat("container", order.Name, "run", 0))
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
 	}
 
-	err = ackPublic(client, AckMsgFormat("container", order.Name, "run", 1))
+	err = ackPublic(Client, AckMsgFormat("container", order.Name, "run", 1))
 	if err != nil {
 		err = errors.New(fmt.Sprintf("Ack public error %v", err))
 		ErrorPublic(err)
 	}
-	MessagePublic(client, GetTopic(SysStatusPub), "online")
+	MessagePublic(Client, GetTopicCN(SysStatusPub, order.Name), "online")
 }
 
 func (s *sockerImp) ContainerLs(client mqtt.Client) {
@@ -164,14 +164,14 @@ func (s *sockerImp)ImageRm(order Order) {
 		log.Errorf("Remove image %s error %v", order.Name, err)
 		err := errors.New(fmt.Sprintf("Remove image %s error %v", order.Name, err))
 		ErrorPublic(err)
-		err = ackPublic(client, AckMsgFormat("image", order.Name, "remove", 0))
+		err = ackPublic(Client, AckMsgFormat("image", order.Name, "remove", 0))
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
 	}
 
-	err = ackPublic(client, AckMsgFormat("image", order.Name, "remove", 1))
+	err = ackPublic(Client, AckMsgFormat("image", order.Name, "remove", 1))
 	if err != nil {
 		err = errors.New(fmt.Sprintf("Ack public error %v", err))
 		ErrorPublic(err)
@@ -185,20 +185,20 @@ func (s *sockerImp)ContainerStop(order Order) {
 		log.Errorf("Stop container %s error %v", order.Name, err)
 		err := errors.New(fmt.Sprintf("Stop container %s error %v", order.Name, err))
 		ErrorPublic(err)
-		err = ackPublic(client, AckMsgFormat("container", order.Name, "stop", 0))
+		err = ackPublic(Client, AckMsgFormat("container", order.Name, "stop", 0))
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
 	}
 
-	err = ackPublic(client, AckMsgFormat("container", order.Name, "stop", 1))
+	err = ackPublic(Client, AckMsgFormat("container", order.Name, "stop", 1))
 	if err != nil {
 		err = errors.New(fmt.Sprintf("Ack public error %v", err))
 		ErrorPublic(err)
 	}
 
-	MessagePublic(client, GetTopic(SysStatusPub), "offline")
+	MessagePublic(Client, GetTopicCN(SysStatusPub, order.Name), "offline")
 }
 
 func LogAutoPub() {
@@ -228,7 +228,7 @@ func LogAutoPub() {
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					message, err := readFile(DefaultLogPath)
 					fmt.Println(message)
-					err = MessagePublic(client, GetTopic(SysGWLogPub), message)
+					err = MessagePublic(Client, GetTopic(SysGWLogPub), message)
 					if err != nil {
 						log.Errorf("Send message error %v", err)
 						ErrorPublic(err)
@@ -299,14 +299,14 @@ func (s *sockerImp) ContainerCommit(order Order) {
 		log.Errorf("Commit container %s error %v", order.Name, err)
 		err := errors.New(fmt.Sprintf("Commit container %s error %v", order.Name, err))
 		ErrorPublic(err)
-		err = ackPublic(client, AckMsgFormat("container", order.Name, "commit", 0))
+		err = ackPublic(Client, AckMsgFormat("container", order.Name, "commit", 0))
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
 	}
 
-	err = ackPublic(client, AckMsgFormat("container", order.Name, "commit", 1))
+	err = ackPublic(Client, AckMsgFormat("container", order.Name, "commit", 1))
 	if err != nil {
 		err = errors.New(fmt.Sprintf("Ack public error %v", err))
 		ErrorPublic(err)
@@ -320,14 +320,14 @@ func (s *sockerImp) ContainerRemove(order Order) {
 		log.Errorf("Remove container %s error %v", order.Name, err)
 		err := errors.New(fmt.Sprintf("Remove container %s error %v", order.Name, err))
 		ErrorPublic(err)
-		err = ackPublic(client, AckMsgFormat("container", order.Name, "remove", 0))
+		err = ackPublic(Client, AckMsgFormat("container", order.Name, "remove", 0))
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
 	}
 
-	err = ackPublic(client, AckMsgFormat("container", order.Name, "remove", 1))
+	err = ackPublic(Client, AckMsgFormat("container", order.Name, "remove", 1))
 	if err != nil {
 		err = errors.New(fmt.Sprintf("Ack public error %v", err))
 		ErrorPublic(err)

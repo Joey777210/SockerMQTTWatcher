@@ -74,7 +74,7 @@ func (c *ContainerImp) Run(order Order) error {
 	FillContainerInfo(c)
 	Containers[c.Name] = *c
 
-	
+
 
 	//TODO
 	//Listen on contianer Topic
@@ -153,7 +153,7 @@ func (c *ContainerImp) Commit(containerName string) error {
 		return err
 	}
 	s := sockerImp{}
-	s.ImageLs(client)
+	s.ImageLs(Client)
 	return nil
 }
 
@@ -170,7 +170,7 @@ func (c *ContainerImp) Logs(client mqtt.Client, containerName string) error {
 
 	logPath := fmt.Sprintf(DefaultInfoPath, c.Name) + "container.log"
 	logs, err := readFile(logPath)
-	err = MessagePublic(client, GetTopic(SysLogPub), logs)
+	err = MessagePublic(client, GetTopicCN(SysLogPub, c.Name), logs)
 	if err != nil {
 		err := errors.New(fmt.Sprintf("Logs public error %v", err))
 		ErrorPublic(err)

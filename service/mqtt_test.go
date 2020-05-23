@@ -48,12 +48,12 @@ func TestSockerImp_ConatainerLs(t *testing.T) {
 	//	Content: Marshal1(),
 	//}
 	s.RunNewContainer(order)
-	s.ContainerLs(client)
+	s.ContainerLs(Client)
 }
 
 func TestSockerImp_ImageLs(t *testing.T) {
 	s := sockerImp{}
-	s.ImageLs(client)
+	s.ImageLs(Client)
 }
 
 func TestSockerImp_ContainerStop(t *testing.T) {
@@ -71,5 +71,5 @@ func TestSockerImp_ContainerLogs(t *testing.T) {
 		Order:   "run",
 		Content: Marshal1(),
 	}
-	s.ContainerLogs(client, order)
+	s.ContainerLogs(Client, order)
 }

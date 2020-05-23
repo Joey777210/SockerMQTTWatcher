@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-var client mqtt.Client
+var Client mqtt.Client
 
 //Only for gateway topic.    Container topic is in another connection
 func Connect(gatewayName string) {
@@ -23,18 +23,18 @@ func Connect(gatewayName string) {
 	tlsConfig := &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
 	opts.SetTLSConfig(tlsConfig)
 
-	client = mqtt.NewClient(opts)
+	Client = mqtt.NewClient(opts)
 
 	var flag = 0
 	for {
 		if flag == 0 {
-			if token := client.Connect(); token.Wait() && token.Error() != nil {
+			if token := Client.Connect(); token.Wait() && token.Error() != nil {
 				flag = 1
 			} else {
 				break
 			}
 		} else if flag == 1 {
-			if token := client.Connect(); token.Wait() && token.Error() != nil {
+			if token := Client.Connect(); token.Wait() && token.Error() != nil {
 
 			} else {
 				flag = 0
@@ -50,7 +50,7 @@ func Connect(gatewayName string) {
 
 func OnConnect(client mqtt.Client) {
 	if token := client.Subscribe(GetTopic(SysOrderSub), 0, onMessageReceived); token.Wait() && token.Error() != nil {
-		log.Errorf("mqtt client subscribe topic %s Error %v", GetTopic(SysOrderSub), token.Error())
+		log.Errorf("mqtt Client subscribe topic %s Error %v", GetTopic(SysOrderSub), token.Error())
 	}
 }
 
