@@ -32,7 +32,7 @@ func TestFillContainerInfo(t *testing.T) {
 		Memory:      "512",
 		CpuSet:      "1",
 		CpuShare:    "512",
-		PortMapping: arr,
+		PortMapping: "80:80",
 	}
 	FillContainerInfo(&container)
 }

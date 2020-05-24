@@ -20,7 +20,7 @@ func Connect(gatewayName string) {
 	//opts.OnConnectionLost = OnConnectLost
 
 	Replace(gatewayName)
-	
+
 	tlsConfig := &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
 	opts.SetTLSConfig(tlsConfig)
 
@@ -50,7 +50,7 @@ func Connect(gatewayName string) {
 }
 
 func OnConnect(client mqtt.Client) {
-
+	log.Info("onconnect")
 	if token := client.Subscribe(GetTopic(SysOrderSub), 0, onMessageReceived); token.Wait() && token.Error() != nil {
 		log.Errorf("mqtt Client subscribe topic %s Error %v", GetTopic(SysOrderSub), token.Error())
 	}
@@ -63,6 +63,9 @@ func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 	if err != nil {
 		log.Errorf("Unmarshal order error %v", err)
 	}
+	log.Info(string(msg))
+	log.Info(order.Name + "\n" + order.Target + "\n" + order.Content + "\n")
+	log.Infof("content!!!!!!!!!! %s", order.Content)
 
 	socker := sockerImp{}
 	switch order.Target {

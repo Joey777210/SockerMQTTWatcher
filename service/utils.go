@@ -1,7 +1,6 @@
 package service
 
 import (
-
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	mqtt "github.com/eclipse/paho.mqtt.golang"

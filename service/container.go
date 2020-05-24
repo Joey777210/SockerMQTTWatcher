@@ -21,17 +21,18 @@ type Container interface {
 
 
 type ContainerImp struct {
-	ID		string			`json:"id"`
-	Name	string			`json:"name"`
-	Pid		string			`json:"pid"`
-	Status	string			`json:"status"`
-	Command	string			`json:"command"`
-	CreatTime	string		`json:"createTime"`
-	Image	string			`json:"image"`
-	Memory	string			`json:"memory"`
-	CpuSet	string			`json:"cpuset"`
-	CpuShare	string		`json:"cpushare"`
-	PortMapping	[]string	`json:"portmapping"`
+	ID				string			`json:"id"`
+	Name			string			`json:"name"`
+	Pid				string			`json:"pid"`
+	Status			string			`json:"status"`
+	Command			string			`json:"command"`
+	CreatTime		string			`json:"createTime"`
+	Image			string			`json:"image"`
+	Memory			string			`json:"memory"`
+	CpuSet			string			`json:"cpuset"`
+	CpuShare		string			`json:"cpushare"`
+	PortMapping1	string			`json:"portmapping1"`
+	PortMapping2	string			`json:"portmapping2"`
 }
 
 
@@ -51,7 +52,7 @@ func (c *ContainerImp) Run(order Order) error {
 		}
 	}
 
-	base := "sudo socker run -d -mqtt %s -net testbridge -p %s --name %s %s %s"
+	base := "sudo socker run -d -mqtt %s -net testbridge -p %s:%s --name %s %s %s"
 	resource := ""
 	if c.Memory != ""{
 		resource += "-m " + c.Memory
@@ -62,8 +63,9 @@ func (c *ContainerImp) Run(order Order) error {
 	if c.CpuShare != ""{
 		resource += " -cpushare " + c.CpuShare
 	}
-	runCmd := fmt.Sprintf(base, resource, c.PortMapping[0], c.Name, c.Image, c.Command)
-
+	runCmd := fmt.Sprintf(base, resource, c.PortMapping1, c.PortMapping2, c.Name, c.Image, c.Command)
+	//TODO
+	log.Infoln(runCmd)
 	cmd := exec.Command("/bin/sh", "-c", runCmd)
 	err = cmd.Run()
 	if err != nil {
@@ -193,25 +195,24 @@ func FillContainerInfo(container *ContainerImp) {
 	if err != nil {
 		log.Errorf("Json unmarshal error %v", err)
 	}
-	fmt.Printf("%s %s %s %s %s %s", container.CreatTime, container.Status, container.Pid, container.ID, container.Name, container.Command)
 }
-
-func Marshal1() string {
-	container := ContainerImp{
-		Name:        "bird",
-		Command:     "top -b",
-		Image:       "ubuntu",
-		Memory:      "512",
-		CpuSet:      "1",
-		CpuShare:    "512",
-		PortMapping: []string{"8080:80", "9090:90"},
-	}
-	bytes, err := json.Marshal(&container)
-	if err != nil {
-		log.Errorf("%v", err)
-	}
-	return string(bytes)
-}
+//
+//func Marshal1() string {
+//	container := ContainerImp{
+//		Name:        "bird",
+//		Command:     "top -b",
+//		Image:       "ubuntu",
+//		Memory:      "512",
+//		CpuSet:      "1",
+//		CpuShare:    "512",
+//		PortMapping: "8080:80",
+//	}
+//	bytes, err := json.Marshal(&container)
+//	if err != nil {
+//		log.Errorf("%v", err)
+//	}
+//	return string(bytes)
+//}
 
 func isExist(containerName string) error {
 	_, ok := Containers[containerName]
@@ -222,3 +223,4 @@ func isExist(containerName string) error {
 	}
 	return nil
 }
+
