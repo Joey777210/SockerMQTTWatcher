@@ -13,10 +13,11 @@ import (
 var Containers = make(map[string]ContainerImp)
 
 type Container interface {
+	Run(order Order) error
 	Stop(containerName string) error
 	Remove(containerName string) error
 	Commit(containerName string) error
-	Log(containerName string) error
+	Logs(client mqtt.Client, containerName string) error
 }
 
 
@@ -45,14 +46,14 @@ func (c *ContainerImp) Run(order Order) error {
 
 	_, ok := Containers[c.Name]
 	if ok {
-		if Containers[c.Name].Status == "runnning" {
+		if Containers[c.Name].Status == "running" {
 			err := errors.New("container already running")
 			ErrorPublic(err)
 			return err
 		}
 	}
 
-	base := "sudo socker run -d -mqtt %s -net testbridge -p %s:%s --name %s %s %s"
+	base := "sudo socker run -d %s -net testbridge -p %s:%s --name %s %s %s"
 	resource := ""
 	if c.Memory != ""{
 		resource += "-m " + c.Memory
@@ -64,8 +65,7 @@ func (c *ContainerImp) Run(order Order) error {
 		resource += " -cpushare " + c.CpuShare
 	}
 	runCmd := fmt.Sprintf(base, resource, c.PortMapping1, c.PortMapping2, c.Name, c.Image, c.Command)
-	//TODO
-	log.Infoln(runCmd)
+
 	cmd := exec.Command("/bin/sh", "-c", runCmd)
 	err = cmd.Run()
 	if err != nil {
@@ -87,24 +87,27 @@ func (c *ContainerImp) Stop(containerName string) error {
 	if containerName == "" {
 		return errors.New("empty name error")
 	}
-	c.Name = containerName
-	_, ok := Containers[c.Name]
+	container, ok := Containers[containerName]
 	if !ok {
 		err := errors.New("no such container")
 		ErrorPublic(err)
 		return err
 	}
 
-	command1 := "sudo /bin/sh -c \"socker stop " + c.Name + " > " + DefaultLogPath +"\""
+	command1 := "sudo /bin/sh -c \"socker stop " + containerName + " > " + DefaultLogPath +"\""
 	cmd := exec.Command("/bin/sh", "-c", command1)
 
 	err := cmd.Run()
+
 	if err != nil {
 		log.Errorf("Exec command %s error %v", cmd.String(), err)
 		ErrorPublic(err)
 		return err
 	}
-	c.Status = "stopped"
+
+	container.Status = "stopped"
+	delete(Containers, containerName)
+	Containers[containerName] = container
 
 	return nil
 }
@@ -113,25 +116,27 @@ func (c *ContainerImp) Remove(containerName string) error {
 	if containerName == "" {
 		return errors.New("empty name error")
 	}
+
 	c.Name = containerName
 	err := isExist(c.Name)
 	if err != nil {
 		return err
 	}
 
-	if c.Status == "running" {
+	if Containers[c.Name].Status == "running" {
+		log.Infoln(Containers[c.Name].Status)
 		err = errors.New("you can't remove a running container, please stop the container first!")
 		ErrorPublic(err)
 		return err
-	} else if c.Status == "stopped" {
-		command := "sudo sh -c \"sudo socker remove" + c.Name + "\""
+	} else if Containers[c.Name].Status == "stopped" {
+		command := "sudo sh -c \"sudo socker remove" + Containers[c.Name].Status + "\""
 		cmd := exec.Command("bin/sh", "-c", command)
 		err = cmd.Run()
 		if err != nil {
 			ErrorPublic(err)
 			return err
 		}
-		delete(Containers, c.Name)
+		delete(Containers, Containers[c.Name].Status)
 	}
 	return nil
 }
@@ -190,7 +195,7 @@ func FillContainerInfo(container *ContainerImp) {
 	if err != nil {
 		log.Errorf("Read file %s error %v", confPath, err)
 	}
-	fmt.Println(string(conf))
+
 	err = json.Unmarshal(conf, &container)
 	if err != nil {
 		log.Errorf("Json unmarshal error %v", err)

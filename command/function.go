@@ -1,7 +1,6 @@
 package command
 
 import (
-
 	"SockerMQTTWatcher/service"
 	"errors"
 	"fmt"
@@ -18,7 +17,7 @@ func start(gatewayName string) {
 	go service.LogAutoPub()
 	go containerLiveCheck()
 
-	//TODO listen port:8888, resend data
+	go service.Listen(":8888", service.Client)
 }
 
 func stop() {

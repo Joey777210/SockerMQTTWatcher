@@ -44,6 +44,7 @@ func (s *sockerImp) RunNewContainer(order Order) {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
+		return
 	}
 
 	err = ackPublic(Client, AckMsgFormat("container", order.Name, "run", 1))
@@ -55,7 +56,6 @@ func (s *sockerImp) RunNewContainer(order Order) {
 }
 
 func (s *sockerImp) ContainerLs(client mqtt.Client) {
-
 	bytes, err := json.Marshal(Containers)
 	if err != nil {
 		log.Errorf("json marshal error %v", err)
@@ -65,14 +65,15 @@ func (s *sockerImp) ContainerLs(client mqtt.Client) {
 	if err != nil {
 		err := errors.New(fmt.Sprintf("Container ls error %v", err))
 		ErrorPublic(err)
-		err = ackPublic(client, AckMsgFormat("container", "", "stop", 0))
+		err = ackPublic(client, AckMsgFormat("container", "", "ls", 0))
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
+		return
 	}
 
-	err = ackPublic(client, AckMsgFormat("container", "", "stop", 1))
+	err = ackPublic(client, AckMsgFormat("container", "", "ls", 1))
 	if err != nil {
 		err = errors.New(fmt.Sprintf("Ack public error %v", err))
 		ErrorPublic(err)
@@ -90,6 +91,7 @@ func (s *sockerImp) ImageLs(client mqtt.Client) {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
+		return
 	}
 
 	bytes, err := json.Marshal(Images)
@@ -102,6 +104,7 @@ func (s *sockerImp) ImageLs(client mqtt.Client) {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
+		return
 	}
 	message := string(bytes)
 	err = MessagePublic(client, GetTopic(SysImglsPub), message)
@@ -114,6 +117,7 @@ func (s *sockerImp) ImageLs(client mqtt.Client) {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
+		return
 	}
 
 	err = ackPublic(client, AckMsgFormat("image", "", "ls", 1))
@@ -121,6 +125,7 @@ func (s *sockerImp) ImageLs(client mqtt.Client) {
 		err = errors.New(fmt.Sprintf("Ack public error %v", err))
 		ErrorPublic(err)
 	}
+	return
 }
 
 func findImages() error {
@@ -170,6 +175,7 @@ func (s *sockerImp)ImageRm(order Order) {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
+		return
 	}
 
 	err = ackPublic(Client, AckMsgFormat("image", order.Name, "remove", 1))
@@ -182,6 +188,7 @@ func (s *sockerImp)ImageRm(order Order) {
 func (s *sockerImp)ContainerStop(order Order) {
 	container := ContainerImp{}
 	err := container.Stop(order.Name)
+
 	if err != nil {
 		log.Errorf("Stop container %s error %v", order.Name, err)
 		err := errors.New(fmt.Sprintf("Stop container %s error %v", order.Name, err))
@@ -191,6 +198,7 @@ func (s *sockerImp)ContainerStop(order Order) {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
+		return
 	}
 
 	err = ackPublic(Client, AckMsgFormat("container", order.Name, "stop", 1))
@@ -305,6 +313,7 @@ func (s *sockerImp) ContainerCommit(order Order) {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
+		return
 	}
 
 	err = ackPublic(Client, AckMsgFormat("container", order.Name, "commit", 1))
@@ -326,12 +335,14 @@ func (s *sockerImp) ContainerRemove(order Order) {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
+		return
 	}
 
-	err = ackPublic(Client, AckMsgFormat("container", order.Name, "remove", 1))
+	err = ackPublic(Client, AckMsgFormat("container", order.Name, "remove", 4))
 	if err != nil {
 		err = errors.New(fmt.Sprintf("Ack public error %v", err))
 		ErrorPublic(err)
+		return
 	}
 }
 
@@ -347,12 +358,14 @@ func (s *sockerImp) ContainerLogs(client mqtt.Client, order Order) {
 			err = errors.New(fmt.Sprintf("Ack public error %v", err))
 			ErrorPublic(err)
 		}
+		return
 	}
 
 	err = ackPublic(client, AckMsgFormat("container", order.Name, "logs", 1))
 	if err != nil {
 		err = errors.New(fmt.Sprintf("Ack public error %v", err))
 		ErrorPublic(err)
+		return
 	}
 }
 

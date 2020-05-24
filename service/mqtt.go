@@ -97,6 +97,7 @@ func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 	case "socker":
 		switch order.Order {
 		case "newNetwork":
+			//TODO
 		case "delete":
 			socker.Delete()
 		}
