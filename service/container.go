@@ -76,6 +76,10 @@ func (c *ContainerImp) Run(order Order) error {
 	FillContainerInfo(c)
 	Containers[c.Name] = *c
 
+	err = SaveContainers()
+	if err != nil {
+		return err
+	}
 
 	//TODO
 	//Listen on contianer Topic
@@ -94,7 +98,7 @@ func (c *ContainerImp) Stop(containerName string) error {
 		return err
 	}
 
-	command1 := "sudo /bin/sh -c \"socker stop " + containerName + " > " + DefaultLogPath +"\""
+	command1 := "sudo /bin/sh -c \"socker stop " + containerName + " > " + DefaultMQTTPath + "/sockerlog" + "\""
 	cmd := exec.Command("/bin/sh", "-c", command1)
 
 	err := cmd.Run()
@@ -109,6 +113,11 @@ func (c *ContainerImp) Stop(containerName string) error {
 	delete(Containers, containerName)
 	Containers[containerName] = container
 
+	err = SaveContainers()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -117,27 +126,34 @@ func (c *ContainerImp) Remove(containerName string) error {
 		return errors.New("empty name error")
 	}
 
-	c.Name = containerName
-	err := isExist(c.Name)
+	err := isExist(containerName)
 	if err != nil {
 		return err
 	}
 
-	if Containers[c.Name].Status == "running" {
-		log.Infoln(Containers[c.Name].Status)
+	if Containers[containerName].Status == "running" {
+		log.Infoln(Containers[containerName].Status)
 		err = errors.New("you can't remove a running container, please stop the container first!")
 		ErrorPublic(err)
 		return err
-	} else if Containers[c.Name].Status == "stopped" {
-		command := "sudo sh -c \"sudo socker remove" + Containers[c.Name].Status + "\""
+	} else if Containers[containerName].Status == "stopped" {
+		command := "sudo /bin/sh -c \"socker remove " + containerName + " > " + DefaultMQTTPath + "/sockerlog" + "\""
+		log.Infoln(command)
 		cmd := exec.Command("bin/sh", "-c", command)
 		err = cmd.Run()
 		if err != nil {
 			ErrorPublic(err)
 			return err
 		}
-		delete(Containers, Containers[c.Name].Status)
+		delete(Containers, containerName)
+		log.Infoln("_____________________________________________________________________________")
 	}
+
+	err = SaveContainers()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -151,7 +167,7 @@ func (c *ContainerImp) Commit(containerName string) error {
 		return err
 	}
 
-	command := "sudo /bin/sh -c \"socker commit " + c.Name + " > " + DefaultLogPath +"\""
+	command := "sudo /bin/sh -c \"socker commit " + c.Name + " > " + DefaultMQTTPath + "sockerlog" +"\""
 	cmd := exec.Command("/bin/sh", "-c", command)
 	err = cmd.Run()
 	if err != nil {

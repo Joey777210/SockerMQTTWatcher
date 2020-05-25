@@ -2,6 +2,7 @@ package command
 
 import (
 	"SockerMQTTWatcher/service"
+	"encoding/json"
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
@@ -12,6 +13,7 @@ import (
 
 func start(gatewayName string) {
 	//log.SetMylog()
+	loadContainers()
 	InitSubnet()
 	service.Connect(gatewayName)
 	go service.LogAutoPub()
@@ -52,4 +54,19 @@ func containerLiveCheck() {
 		time.Sleep(100*time.Second)
 	}
 
+}
+
+func loadContainers() {
+	filePath := service.DefaultMQTTPath + "/containers.log"
+	file, err := os.OpenFile(filePath, os.O_RDWR, 0666)
+	if err != nil {
+		log.Errorf("Open file %s error %v", filePath, err)
+	}
+	buf := make([]byte, 1024*1024)
+	n, _ := file.Read(buf)
+
+	err = json.Unmarshal(buf, &service.Containers)
+	if err != nil {
+		log.Errorf("Json Unmarshal file %s error %v", filePath, err)
+	}
 }

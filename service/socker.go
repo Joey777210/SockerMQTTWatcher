@@ -17,7 +17,7 @@ import (
 var (
 	DefaultInfoPath = "/var/run/socker/%s"
 	DefaultRootPath = "/root"
-	DefaultLogPath	= "/var/run/socker/sockerlog"
+	DefaultMQTTPath = "/var/run/mqtt"
 )
 
 type socker interface {
@@ -211,13 +211,16 @@ func (s *sockerImp)ContainerStop(order Order) {
 }
 
 func LogAutoPub() {
-	isExist, _ := PathExists(DefaultLogPath)
+	isExist, _ := PathExists(DefaultMQTTPath)
 	if !isExist {
-		if _, err := os.Create(DefaultLogPath); err != nil {
-			log.Errorf("Create file %s error %v", DefaultLogPath, err)
-			ErrorMsgPublic(fmt.Sprintf("Create file %s error %v", DefaultLogPath, err))
+		file, err := os.Create(DefaultMQTTPath)
+		file.Chmod(0777)
+		if err != nil {
+			log.Errorf("Create file %s error %v", DefaultMQTTPath, err)
+			ErrorMsgPublic(fmt.Sprintf("Create file %s error %v", DefaultMQTTPath, err))
 		}
 	}
+
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -235,7 +238,7 @@ func LogAutoPub() {
 				}
 				log.Infoln("event: ", event)
 				if event.Op&fsnotify.Write == fsnotify.Write {
-					message, err := readFile(DefaultLogPath)
+					message, err := readFile(DefaultMQTTPath + "sockerlog")
 					fmt.Println(message)
 					err = MessagePublic(Client, GetTopic(SysGWLogPub), message)
 					if err != nil {
@@ -252,7 +255,7 @@ func LogAutoPub() {
 		}
 	}()
 
-	err = watcher.Add(DefaultLogPath)
+	err = watcher.Add(DefaultMQTTPath + "/sockerlog")
 	if err != nil {
 		log.Errorf("Watch file error2 %v", err)
 	}

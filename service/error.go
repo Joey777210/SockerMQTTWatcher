@@ -30,25 +30,29 @@ func errSave(error error) {
 	if err != nil {
 		if os.IsNotExist(err) {
 			file, _ = os.Create(errfilePath)
+			file.Chmod(0777)
 		}
 	}
+	file, _ = os.OpenFile(errfilePath, os.O_RDWR, 0666)
 	errMsg := fmt.Sprintf("%s Error: %v", time.Now().String(), error)
-	_, err = file.WriteString(errMsg)
+	_, err = file.Write([]byte(errMsg))
 	if err != nil {
-		log.Errorf("Write err to file error %v", err)
+		log.Errorf("\n Write err to file error %v", err)
 	}
 }
 
 
 func errMsgSave(message string) {
-	errfilePath := fmt.Sprintf(DefaultInfoPath, "/mqtterr")
+	errfilePath := fmt.Sprintf(DefaultInfoPath, "mqtterr")
 	var file *os.File
 	file, err := os.Open(errfilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			file, _ = os.Create(errfilePath)
+			file.Chmod(0777)
 		}
 	}
+
 	errMsg := fmt.Sprintf("%s Error: %s", time.Now().String(), message)
 	_, err = file.WriteString(errMsg)
 	if err != nil {

@@ -65,7 +65,6 @@ func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 	}
 	log.Info(string(msg))
 	log.Info(order.Name + "\n" + order.Target + "\n" + order.Content + "\n")
-	log.Infof("content!!!!!!!!!! %s", order.Content)
 
 	socker := sockerImp{}
 	switch order.Target {
