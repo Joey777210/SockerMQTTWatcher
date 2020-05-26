@@ -138,15 +138,15 @@ func (c *ContainerImp) Remove(containerName string) error {
 		return err
 	} else if Containers[containerName].Status == "stopped" {
 		command := "sudo /bin/sh -c \"socker remove " + containerName + " > " + DefaultMQTTPath + "/sockerlog" + "\""
-		log.Infoln(command)
-		cmd := exec.Command("bin/sh", "-c", command)
+
+		cmd := exec.Command("/bin/sh", "-c", command)
 		err = cmd.Run()
 		if err != nil {
 			ErrorPublic(err)
 			return err
 		}
 		delete(Containers, containerName)
-		log.Infoln("_____________________________________________________________________________")
+
 	}
 
 	err = SaveContainers()

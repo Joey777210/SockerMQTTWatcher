@@ -42,13 +42,12 @@ func SaveContainers() error {
 	stdErrFilePath := DefaultMQTTLogDir + "/containers.log"
 	_, err := os.Stat(stdErrFilePath)
 	if os.IsNotExist(err) {
-		file, _ := os.Create(stdErrFilePath)
-		err := file.Chmod(0777)
+		_, err := os.Create(stdErrFilePath)
 		if err != nil {
 			log.Errorf("%v", err)
 		}
 	}
-	stdLogFile, err := os.OpenFile(stdErrFilePath, os.O_RDWR | os.O_TRUNC, 0666)
+	stdLogFile, err := os.OpenFile(stdErrFilePath, os.O_RDWR | os.O_TRUNC, 0777)
 	if err != nil {
 		log.Errorf("NewParentProcess create file %s error %v", stdErrFilePath, err)
 		return err

@@ -65,7 +65,7 @@ func loadContainers() {
 	buf := make([]byte, 1024*1024)
 	n, _ := file.Read(buf)
 
-	err = json.Unmarshal(buf, &service.Containers)
+	err = json.Unmarshal(buf[:n], &service.Containers)
 	if err != nil {
 		log.Errorf("Json Unmarshal file %s error %v", filePath, err)
 	}

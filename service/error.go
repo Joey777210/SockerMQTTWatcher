@@ -45,7 +45,7 @@ func errSave(error error) {
 func errMsgSave(message string) {
 	errfilePath := fmt.Sprintf(DefaultInfoPath, "mqtterr")
 	var file *os.File
-	file, err := os.Open(errfilePath)
+	file, err := os.OpenFile(errfilePath, os.O_RDWR, 0777)
 	if err != nil {
 		if os.IsNotExist(err) {
 			file, _ = os.Create(errfilePath)
