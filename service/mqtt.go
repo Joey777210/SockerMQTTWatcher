@@ -83,7 +83,7 @@ func onMessageReceived(client mqtt.Client, message mqtt.Message) {
 			socker.ContainerRemove(order)
 		case "ls":
 			socker.ContainerLs(client)
-		case "log":
+		case "logs":
 			socker.ContainerLogs(client, order)
 		}
 	case "image":

@@ -137,7 +137,7 @@ func (c *ContainerImp) Remove(containerName string) error {
 		ErrorPublic(err)
 		return err
 	} else if Containers[containerName].Status == "stopped" {
-		command := "sudo /bin/sh -c \"socker remove " + containerName + " > " + DefaultMQTTPath + "/sockerlog" + "\""
+		command := "sudo /bin/sh -c \"socker rm " + containerName + " > " + DefaultMQTTPath + "/sockerlog" + "\""
 
 		cmd := exec.Command("/bin/sh", "-c", command)
 		err = cmd.Run()
@@ -146,7 +146,6 @@ func (c *ContainerImp) Remove(containerName string) error {
 			return err
 		}
 		delete(Containers, containerName)
-
 	}
 
 	err = SaveContainers()
@@ -184,21 +183,36 @@ func (c *ContainerImp) Logs(client mqtt.Client, containerName string) error {
 		return errors.New("empty name error")
 	}
 
-	c.Name = containerName
-	err := isExist(c.Name)
+	err := isExist(containerName)
 	if err != nil {
 		return err
 	}
 
-	logPath := fmt.Sprintf(DefaultInfoPath, c.Name) + "container.log"
-	logs, err := readFile(logPath)
-	err = MessagePublic(client, GetTopicCN(SysLogPub, c.Name), logs)
+	logPath := fmt.Sprintf(DefaultInfoPath, containerName) + "/container.log"
+
+	file, err := os.Open(logPath)
 	if err != nil {
-		err := errors.New(fmt.Sprintf("Logs public error %v", err))
+		log.Errorf("Open file %s error %v \n", logPath, err)
 		ErrorPublic(err)
-		return err
 	}
+	defer file.Close()
+	buf := make([]byte, 1024)
+	for {
+		n, err := file.Read(buf)
+		if err != nil {
+			ErrorPublic(err)
+		}
+		if 0 == n {
+			break
+		}
 
+		err = MessagePublic(client, GetTopicCN(SysLogPub, containerName), string(buf[:n]))
+		if err != nil {
+			err := errors.New(fmt.Sprintf("Logs public error %v", err))
+			ErrorPublic(err)
+			return err
+		}
+	}
 	return nil
 }
 

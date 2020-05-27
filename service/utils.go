@@ -34,13 +34,16 @@ func AckMsgFormat(target string, name string, command string, ack int) string {
 }
 
 func SaveContainers() error {
-	//
-	//if err := os.MkdirAll(DefaultMQTTLogDir, 0622); err != nil {
-	//	log.Errorf("NewParentProcess mkdir %s error %v", DefaultMQTTLogDir, err)
-	//	return err
-	//}
+	_, err := os.Stat(DefaultMQTTLogDir)
+	if os.IsNotExist(err) {
+		if err := os.MkdirAll(DefaultMQTTLogDir, 0777); err != nil {
+			log.Errorf("NewParentProcess mkdir %s error %v", DefaultMQTTLogDir, err)
+			return err
+		}
+	}
+
 	stdErrFilePath := DefaultMQTTLogDir + "/containers.log"
-	_, err := os.Stat(stdErrFilePath)
+	_, err = os.Stat(stdErrFilePath)
 	if os.IsNotExist(err) {
 		_, err := os.Create(stdErrFilePath)
 		if err != nil {

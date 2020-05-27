@@ -341,7 +341,7 @@ func (s *sockerImp) ContainerRemove(order Order) {
 		return
 	}
 
-	err = ackPublic(Client, AckMsgFormat("container", order.Name, "remove", 4))
+	err = ackPublic(Client, AckMsgFormat("container", order.Name, "remove", 1))
 	if err != nil {
 		err = errors.New(fmt.Sprintf("Ack public error %v", err))
 		ErrorPublic(err)
